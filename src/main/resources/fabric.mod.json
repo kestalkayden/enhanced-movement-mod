@@ -4,13 +4,13 @@
   "version": "${version}",
 
   "name": "Enhanced Movement",
-  "description": "A mod that enabled a quick and dirty double jump and dash in any direction! (:",
+  "description": "A mod that enabled a quick and dirty double jump and dash in any direction! Works on all 1.19.* versions.",
   "authors": [
     "Kestalkayden"
   ],
   "contact": {
     "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "sources": "https://github.com/kestalkayden/enhanced-movement-mod"
   },
 
   "license": "CC0-1.0",
@@ -28,7 +28,10 @@
   "depends": {
     "fabricloader": ">=0.14.17",
     "fabric-api": "*",
-    "minecraft": "~1.19.4",
+    "minecraft": [
+      "1.19.*",
+      "1.20.*"
+    ],
     "java": ">=17"
   },
   "suggests": {
