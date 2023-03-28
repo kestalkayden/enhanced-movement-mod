@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "enhancedmovement",
+  "version": "${version}",
+
+  "name": "Enhanced Movement",
+  "description": "A mod that enabled a quick and dirty double jump and dash in any direction! (:",
+  "authors": [
+    "Kestalkayden"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/EnhancedMovement/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.fabricmc.EnhancedMovement.EnhancedMovement"
+    ]
+  },
+  "mixins": [
+    "enhancedmovement.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.14.17",
+    "fabric-api": "*",
+    "minecraft": "~1.19.4",
+    "java": ">=17"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
