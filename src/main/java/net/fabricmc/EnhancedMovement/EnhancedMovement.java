@@ -138,6 +138,12 @@ public class EnhancedMovement implements ModInitializer {
     }
 
     private void handleDash(KeyBinding key, boolean isPressed, AtomicLong pressTime, AtomicLong cooldownTime, AtomicBoolean keyReleased, AtomicLong globalCooldownTime) {
+
+        // Check if the player has a UI up
+        if (client.currentScreen != null) {
+            return;
+        }
+
         long currentTime = System.currentTimeMillis();
         int timeDelayDash = 350;
         int timeCooldownDash = 1300;
