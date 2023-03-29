@@ -2,17 +2,22 @@ package net.fabricmc.EnhancedMovement;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.client.option.GameOptions;
+import net.minecraft.client.util.InputUtil;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.option.KeyBinding;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import net.fabricmc.EnhancedMovement.NetworkHandler;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.entity.LivingEntity;
+
 
 public class EnhancedMovement implements ModInitializer {
 
@@ -54,7 +59,6 @@ public class EnhancedMovement implements ModInitializer {
     private AtomicBoolean leftKeyReleased = new AtomicBoolean(false);
     private AtomicBoolean rightKeyReleased = new AtomicBoolean(false);
 
-
     private KeyBinding lastKeyPressed;
 
     @Override
@@ -81,84 +85,63 @@ public class EnhancedMovement implements ModInitializer {
                 handleDash(backKey, backPressed, backPressTime, backCooldownTime, backKeyReleased, globalCooldownTime);
                 handleDash(leftKey, leftPressed, leftPressTime, leftCooldownTime, leftKeyReleased, globalCooldownTime);
                 handleDash(rightKey, rightPressed, rightPressTime, rightCooldownTime, rightKeyReleased, globalCooldownTime);
-
-
                 boolean onGround = client.player.isOnGround();
                 jumpKeyPressed = InputUtil.isKeyPressed(client.getWindow().getHandle(), client.options.jumpKey.getDefaultKey().getCode());
-
+                
                 // Handle the initial jump
                 if (jumpKeyPressed && !isInAir) {
                     jumpStartTime = System.currentTimeMillis();
                     isInAir = true;
                     isJumping = true;
                 }
-
+                
                 // Handle mid-air jump
                 if (isJumping && isInAir) {
                     long timeSinceJumpStart = System.currentTimeMillis() - jumpStartTime;
                     
-                    if (timeSinceJumpStart >= 250 && jumpKeyPressed && jumpKeyReleased && !midAirJumpPerformed) {
-                        if (!onGround) {
-                            performMidAirJump(client);
-                            midAirJumpPerformed = true;
-                        }
+                    if (timeSinceJumpStart >= 250 && jumpKeyPressed && jumpKeyReleased && !midAirJumpPerformed && !onGround) {
+                        performMidAirJump(client.player);
+                        NetworkHandler.sendDoubleJumpPacket(client.player);
+                        midAirJumpPerformed = true;
                     }
                     
                     if (!jumpKeyPressed) {
                         jumpKeyReleased = true;
                     }
                 }
-
+                
                 // Reset fall distance
                 if (isInAir && jumpKeyReleased && midAirJumpPerformed) {
                     client.player.fallDistance = 0;
                 }
-
+                
                 // Reset all variables when the player is on the ground
                 if (onGround) {
-                    isInAir = false;
-                    midAirJumpPerformed = false;
-                    isJumping = false;
-                    jumpKeyReleased = false;
-                    jumpKeyPressed = false;
-                    jumpStartTime = 0;
-                    gracePeriod = 0;
+                    resetJumpState();
                 }
+
             }
         });
     }
-
-    private void performMidAirJump(MinecraftClient client) {
-        double currentVerticalVelocity = client.player.getVelocity().y;
-        double minimumVerticalVelocity = 0.5;
-        double fixedJumpBoost = 0.4; 
     
+    public void performMidAirJump(PlayerEntity player) {
+        double currentVerticalVelocity = player.getVelocity().y;
+        double minimumVerticalVelocity = 0.3;
+        double fixedJumpBoost = 0.3;
+
         currentVerticalVelocity = Math.max(currentVerticalVelocity, minimumVerticalVelocity);
         double newVerticalVelocity = currentVerticalVelocity + fixedJumpBoost;
-    
+
         // Set the new velocity for the player
-        client.player.setVelocity(client.player.getVelocity().add(0, newVerticalVelocity, 0));
-        client.player.fallDistance = 0;
-    }
-    
-    public MinecraftClient getClient() {
-        return client;
-    }
-    
-    public static EnhancedMovement getInstance() {
-        if (instance == null) {
-            instance = new EnhancedMovement();
-        }
-        return instance;
-    }
-    
-    public boolean hasPerformedMidAirJump() {
-        return midAirJumpPerformed;
+        player.setVelocity(player.getVelocity().add(0, newVerticalVelocity, 0));
+        player.fallDistance = 0;
     }
 
     private void handleDash(KeyBinding key, boolean isPressed, AtomicLong pressTime, AtomicLong cooldownTime, AtomicBoolean keyReleased, AtomicLong globalCooldownTime) {
         long currentTime = System.currentTimeMillis();
-    
+        int timeDelayDash = 350;
+        int timeCooldownDash = 1300;
+
         if (isPressed) {
             if (keyReleased.get()) {
                 if (currentTime - pressTime.get() < timeDelayDash && currentTime - globalCooldownTime.get() > timeCooldownDash) {
@@ -184,30 +167,52 @@ public class EnhancedMovement implements ModInitializer {
     }
 
     private void performDash(KeyBinding key) {
-        double speedMultiplier = 1.5;
-        double heightBoost = 0.4;
-        double xVelocity = 0;
-        double zVelocity = 0;
-        float yaw = client.player.getYaw();
-    
-        if (key == client.options.forwardKey) {
-            xVelocity = -Math.sin(Math.toRadians(yaw));
-            zVelocity = Math.cos(Math.toRadians(yaw));
-        } else if (key == client.options.backKey) {
-            xVelocity = Math.sin(Math.toRadians(yaw));
-            zVelocity = -Math.cos(Math.toRadians(yaw));
-        } else if (key == client.options.leftKey) {
-            xVelocity = Math.cos(Math.toRadians(yaw));
-            zVelocity = Math.sin(Math.toRadians(yaw));
-        } else if (key == client.options.rightKey) {
-            xVelocity = -Math.cos(Math.toRadians(yaw));
-            zVelocity = -Math.sin(Math.toRadians(yaw));
+        if (client.player != null) {
+            float dashSpeed = 1.6f;
+            double playerYaw = Math.toRadians(client.player.getYaw());
+            double offsetX = -Math.sin(playerYaw) * dashSpeed;
+            double offsetZ = Math.cos(playerYaw) * dashSpeed;
+
+            if (key == client.options.forwardKey) {
+                client.player.setVelocity(client.player.getVelocity().add(offsetX, 0, offsetZ));
+                NetworkHandler.sendDashPacket(client.player, offsetX, 0, offsetZ);
+            } else if (key == client.options.backKey) {
+                client.player.setVelocity(client.player.getVelocity().subtract(offsetX, 0, offsetZ));
+                NetworkHandler.sendDashPacket(client.player, -offsetX, 0, -offsetZ);
+            } else if (key == client.options.leftKey) {
+                double leftOffsetX = Math.cos(playerYaw) * dashSpeed;
+                double leftOffsetZ = Math.sin(playerYaw) * dashSpeed;
+                client.player.setVelocity(client.player.getVelocity().add(leftOffsetX, 0, leftOffsetZ));
+                NetworkHandler.sendDashPacket(client.player, leftOffsetX, 0, leftOffsetZ);
+            } else if (key == client.options.rightKey) {
+                double rightOffsetX = -Math.cos(playerYaw) * dashSpeed;
+                double rightOffsetZ = -Math.sin(playerYaw) * dashSpeed;
+                client.player.setVelocity(client.player.getVelocity().add(rightOffsetX, 0, rightOffsetZ));
+                NetworkHandler.sendDashPacket(client.player, rightOffsetX, 0, rightOffsetZ);
+            }
         }
-    
-        xVelocity *= speedMultiplier;
-        zVelocity *= speedMultiplier;
-    
-        // Set the new velocity for the player
-        client.player.setVelocity(client.player.getVelocity().add(xVelocity, heightBoost, zVelocity));
     }
+
+    public static EnhancedMovement getInstance() {
+        return instance;
+    }
+
+    public MinecraftClient getClient() {
+        return client;
+    }
+    
+    public boolean hasPerformedMidAirJump() {
+        return midAirJumpPerformed;
+    }
+
+    private void resetJumpState() {
+        isInAir = false;
+        midAirJumpPerformed = false;
+        isJumping = false;
+        jumpKeyReleased = false;
+        jumpKeyPressed = false;
+        jumpStartTime = 0;
+        gracePeriod = 0;
+    }
+
 }
