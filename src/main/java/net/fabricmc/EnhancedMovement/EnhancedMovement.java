@@ -10,22 +10,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import net.minecraft.server.network.ServerPlayerEntity;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.PacketByteBuf;
 import io.netty.buffer.Unpooled;
-
 
 public class EnhancedMovement implements ModInitializer {
 
@@ -74,6 +69,11 @@ public class EnhancedMovement implements ModInitializer {
     private AtomicBoolean leftKeyReleased = new AtomicBoolean(false);
     private AtomicBoolean rightKeyReleased = new AtomicBoolean(false);
 
+    private final AtomicBoolean forwardPressHandled = new AtomicBoolean(false);
+    private final AtomicBoolean backPressHandled = new AtomicBoolean(false);
+    private final AtomicBoolean leftPressHandled = new AtomicBoolean(false);
+    private final AtomicBoolean rightPressHandled = new AtomicBoolean(false);
+
     @Override
     public void onInitialize() {
         LOGGER.info("Enhanced Movement mod initialized.");
@@ -105,10 +105,12 @@ public class EnhancedMovement implements ModInitializer {
                     if (InputUtil.isKeyPressed(client.getWindow().getHandle(), rightKey.getDefaultKey().getCode())) { rightPressed = true; } else { rightPressed = false; }
                     if (InputUtil.isKeyPressed(client.getWindow().getHandle(), backKey.getDefaultKey().getCode())) { backPressed = true; } else { backPressed = false; }
 
-                    handleDash(forwardKey, forwardPressed, forwardPressTime, forwardCooldownTime, forwardKeyReleased, globalCooldownTime);
-                    handleDash(backKey, backPressed, backPressTime, backCooldownTime, backKeyReleased, globalCooldownTime);
-                    handleDash(leftKey, leftPressed, leftPressTime, leftCooldownTime, leftKeyReleased, globalCooldownTime);
-                    handleDash(rightKey, rightPressed, rightPressTime, rightCooldownTime, rightKeyReleased, globalCooldownTime);
+                    handleDash(forwardKey, forwardPressed, forwardPressTime, forwardCooldownTime, forwardKeyReleased, globalCooldownTime, forwardPressHandled);
+                    handleDash(backKey, backPressed, backPressTime, backCooldownTime, backKeyReleased, globalCooldownTime, backPressHandled);
+                    handleDash(leftKey, leftPressed, leftPressTime, leftCooldownTime, leftKeyReleased, globalCooldownTime, leftPressHandled);
+                    handleDash(rightKey, rightPressed, rightPressTime, rightCooldownTime, rightKeyReleased, globalCooldownTime, rightPressHandled);
+
+
                 }
                 
                 if(isEnableDoubleJump) {
@@ -176,36 +178,38 @@ public class EnhancedMovement implements ModInitializer {
         player.fallDistance = 0;
     }
 
-    private void handleDash(KeyBinding key, boolean isPressed, AtomicLong pressTime, AtomicLong cooldownTime, AtomicBoolean keyReleased, AtomicLong globalCooldownTime) {
+    private void handleDash(KeyBinding key, boolean isPressed, AtomicLong pressTime, AtomicLong cooldownTime, AtomicBoolean keyReleased, AtomicLong globalCooldownTime, AtomicBoolean pressHandled) {
 
         // Check if the player has a UI up
         if (client.currentScreen != null) {
             return;
         }
-
+    
         long currentTime = System.currentTimeMillis();
-
-
-        if (isPressed) {
-            if (keyReleased.get()) {
-                if (currentTime - pressTime.get() < timeDelayDash && currentTime - globalCooldownTime.get() > timeCooldownDash) {
-                    performDash(key);
-                    cooldownTime.set(currentTime);
-                    globalCooldownTime.set(currentTime);
-                    keyReleased.set(false);
-                } else if (currentTime - pressTime.get() >= timeDelayDash) {
-                    pressTime.set(currentTime);
-                    keyReleased.set(false);
+    
+        if(currentTime - globalCooldownTime.get() > timeCooldownDash || globalCooldownTime.get() == 0) {
+            if (isPressed) {
+                if (!pressHandled.get()) {
+                    if (keyReleased.get()) {
+                        if (currentTime - pressTime.get() < timeDelayDash) {
+                            performDash(key);
+                            cooldownTime.set(currentTime);
+                            globalCooldownTime.set(currentTime);
+                            keyReleased.set(false);
+                        } else if (currentTime - pressTime.get() >= timeDelayDash) {
+                            pressTime.set(currentTime);
+                            keyReleased.set(false);
+                        }
+                    } else {
+                        pressTime.set(currentTime);
+                    }
+                    pressHandled.set(true);
                 }
             } else {
-                pressTime.set(currentTime);
-            }
-        } else {
-            if (currentTime - pressTime.get() < timeDelayDash) {
-                keyReleased.set(true);
-            } else {
-                keyReleased.set(false);
-                cooldownTime.set(0);
+                if (currentTime - pressTime.get() < timeDelayDash) {
+                    keyReleased.set(true);
+                }
+                pressHandled.set(false);
             }
         }
     }

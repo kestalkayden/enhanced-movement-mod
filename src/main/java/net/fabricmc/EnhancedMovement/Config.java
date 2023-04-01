@@ -15,11 +15,11 @@ public class Config {
         // Initialize the fields with their default values
         isEnableDoubleJump = true;
         isEnableDash = true;
-        timeDelayDash = 400;
+        timeDelayDash = 450;
         timeCooldownDash = 1000;
-        minimumVerticalVelocity = 0.3;
-        fixedJumpBoost = 0.3;
-        dashSpeed = 1.75f;
+        minimumVerticalVelocity = 0.4;
+        fixedJumpBoost = 0.4;
+        dashSpeed = 1.8f;
     }
 
     public void readFromPacket(PacketByteBuf buf) {
