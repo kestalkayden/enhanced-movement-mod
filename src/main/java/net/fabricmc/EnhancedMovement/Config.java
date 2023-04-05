@@ -17,7 +17,7 @@ public class Config {
         isEnableDoubleJump = true;
         isEnableDash = true;
         isEnableLedgeGrab = true;
-        timeDelayDash = 450;
+        timeDelayDash = 400;
         timeCooldownDash = 1000;
         minimumVerticalVelocity = 0.4;
         fixedJumpBoost = 0.4;

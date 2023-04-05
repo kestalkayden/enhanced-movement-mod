@@ -192,6 +192,26 @@ public class EnhancedMovement implements ModInitializer {
     
         long currentTime = System.currentTimeMillis();
     
+        // Check if the player has performed an action that is not in the direction of the dash
+        boolean resetState = false;
+        if (key == client.options.forwardKey) {
+            resetState = !forwardPressed || leftPressed || rightPressed || backPressed;
+        } else if (key == client.options.backKey) {
+            resetState = !backPressed || leftPressed || rightPressed || forwardPressed;
+        } else if (key == client.options.leftKey) {
+            resetState = !leftPressed || forwardPressed || backPressed || rightPressed;
+        } else if (key == client.options.rightKey) {
+            resetState = !rightPressed || forwardPressed || backPressed || leftPressed;
+        }
+    
+        if (resetState) {
+            forwardPressHandled.set(false);
+            backPressHandled.set(false);
+            leftPressHandled.set(false);
+            rightPressHandled.set(false);
+            keyReleased.set(false);
+        }
+    
         if(currentTime - globalCooldownTime.get() > timeCooldownDash || globalCooldownTime.get() == 0) {
             if (isPressed) {
                 if (!pressHandled.get()) {
