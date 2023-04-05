@@ -60,8 +60,7 @@ public class LedgeGrab {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
         World world = player.getWorld();
         BlockState blockState = player.world.getBlockState(blockPos);
-        Block block = blockState.getBlock();
-        VoxelShape voxelShape = block.getCollisionShape(blockState, world, blockPos, ShapeContext.of(player));
+        VoxelShape voxelShape = blockState.getCollisionShape(world, blockPos, ShapeContext.of(player));
         return voxelShape.isEmpty();
     }
 }
