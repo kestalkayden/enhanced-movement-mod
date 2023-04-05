@@ -15,7 +15,7 @@ public class Config {
         // Initialize the fields with their default values
         isEnableDoubleJump = true;
         isEnableDash = true;
-        timeDelayDash = 450;
+        timeDelayDash = 400;
         timeCooldownDash = 1000;
         minimumVerticalVelocity = 0.4;
         fixedJumpBoost = 0.4;
