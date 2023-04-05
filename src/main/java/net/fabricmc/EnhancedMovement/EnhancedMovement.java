@@ -33,6 +33,7 @@ public class EnhancedMovement implements ModInitializer {
     // Configs
     private boolean isEnableDoubleJump;
     private boolean isEnableDash;
+    private boolean isEnableLedgeGrab;
     private int timeDelayDash;
     private int timeCooldownDash;
     private double minimumVerticalVelocity;
@@ -73,6 +74,7 @@ public class EnhancedMovement implements ModInitializer {
     private final AtomicBoolean backPressHandled = new AtomicBoolean(false);
     private final AtomicBoolean leftPressHandled = new AtomicBoolean(false);
     private final AtomicBoolean rightPressHandled = new AtomicBoolean(false);
+    public static LedgeGrab ledgeGrab = new LedgeGrab();
 
     @Override
     public void onInitialize() {
@@ -83,6 +85,7 @@ public class EnhancedMovement implements ModInitializer {
 
         isEnableDoubleJump = getConfig().isEnableDoubleJump;
         isEnableDash = getConfig().isEnableDash;
+        isEnableLedgeGrab = getConfig().isEnableLedgeGrab;
 
         timeDelayDash = getConfig().timeDelayDash;
         timeCooldownDash = getConfig().timeCooldownDash;
@@ -149,8 +152,10 @@ public class EnhancedMovement implements ModInitializer {
                         resetJumpState();
                     }
                 }
-                
 
+                if(isEnableLedgeGrab){
+                    ledgeGrab.tick();
+                }
             }
         });
 

@@ -5,6 +5,7 @@ import net.minecraft.network.PacketByteBuf;
 public class Config {
     public boolean isEnableDoubleJump;
     public boolean isEnableDash;
+    public boolean isEnableLedgeGrab;
     public int timeDelayDash;
     public int timeCooldownDash;
     public double minimumVerticalVelocity;
@@ -15,6 +16,7 @@ public class Config {
         // Initialize the fields with their default values
         isEnableDoubleJump = true;
         isEnableDash = true;
+        isEnableLedgeGrab = true;
         timeDelayDash = 400;
         timeCooldownDash = 1000;
         minimumVerticalVelocity = 0.4;
@@ -25,6 +27,7 @@ public class Config {
     public void readFromPacket(PacketByteBuf buf) {
         isEnableDoubleJump = buf.readBoolean();
         isEnableDash = buf.readBoolean();
+        isEnableLedgeGrab = buf.readBoolean();
         timeDelayDash = buf.readInt();
         timeCooldownDash = buf.readInt();
         minimumVerticalVelocity = buf.readDouble();
@@ -35,6 +38,7 @@ public class Config {
     public void writeToPacket(PacketByteBuf buf) {
         buf.writeBoolean(isEnableDoubleJump);
         buf.writeBoolean(isEnableDash);
+        buf.writeBoolean(isEnableLedgeGrab);
         buf.writeInt(timeDelayDash);
         buf.writeInt(timeCooldownDash);
         buf.writeDouble(minimumVerticalVelocity);
