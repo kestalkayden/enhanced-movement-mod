@@ -32,6 +32,7 @@ public class EnhancedMovement implements ModInitializer {
     private Config config;
 
     // Configs
+    private boolean isSneakDisableFeatures;
     private boolean isEnableDoubleJump;
     private boolean isEnableDash;
     private boolean isEnableAirDash;
@@ -86,6 +87,7 @@ public class EnhancedMovement implements ModInitializer {
         config = loadConfig();
         instance = this;
 
+        isSneakDisableFeatures = getConfig().isSneakDisableFeatures;
         isEnableDoubleJump = getConfig().isEnableDoubleJump;
         isEnableDash = getConfig().isEnableDash;
         isEnableAirDash = getConfig().isEnableAirDash;
@@ -100,6 +102,11 @@ public class EnhancedMovement implements ModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
+
+                boolean isSneaking = InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), client.options.sneakKey.getDefaultKey().getCode());
+                if(isSneaking && isSneakDisableFeatures == true) {
+                    return;
+                }
 
                 if(isEnableDash) {
                     KeyBinding forwardKey = client.options.forwardKey;

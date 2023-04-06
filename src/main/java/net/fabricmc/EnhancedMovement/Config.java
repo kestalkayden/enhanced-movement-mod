@@ -7,6 +7,7 @@ public class Config {
     public boolean isEnableDash;
     public boolean isEnableLedgeGrab;
     public boolean isEnableAirDash;
+    public boolean isSneakDisableFeatures;
     public int timeDelayDash;
     public int timeCooldownDash;
     public double minimumVerticalVelocity;
@@ -16,6 +17,7 @@ public class Config {
 
     public Config() {
         // Initialize the fields with their default values
+        isSneakDisableFeatures = false;
         isEnableDoubleJump = true;
         isEnableAirDash = true;
         isEnableDash = true;
@@ -29,6 +31,7 @@ public class Config {
     }
 
     public void readFromPacket(PacketByteBuf buf) {
+        isSneakDisableFeatures = buf.readBoolean();
         isEnableDoubleJump = buf.readBoolean();
         isEnableDash = buf.readBoolean();
         isEnableAirDash = buf.readBoolean();
@@ -42,6 +45,7 @@ public class Config {
     }
 
     public void writeToPacket(PacketByteBuf buf) {
+        buf.writeBoolean(isSneakDisableFeatures);
         buf.writeBoolean(isEnableDoubleJump);
         buf.writeBoolean(isEnableDash);
         buf.writeBoolean(isEnableAirDash);
