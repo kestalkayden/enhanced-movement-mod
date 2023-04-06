@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.minecraft.server.network.ServerPlayerEntity;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.IOException;
@@ -33,12 +34,14 @@ public class EnhancedMovement implements ModInitializer {
     // Configs
     private boolean isEnableDoubleJump;
     private boolean isEnableDash;
+    private boolean isEnableAirDash;
     private boolean isEnableLedgeGrab;
     private int timeDelayDash;
     private int timeCooldownDash;
     private double minimumVerticalVelocity;
     private double fixedJumpBoost;
     private float dashSpeed;
+    private float inAirDashSpeed;
 
     // Jump
     private boolean jumpKeyPressed = false;
@@ -85,6 +88,7 @@ public class EnhancedMovement implements ModInitializer {
 
         isEnableDoubleJump = getConfig().isEnableDoubleJump;
         isEnableDash = getConfig().isEnableDash;
+        isEnableAirDash = getConfig().isEnableAirDash;
         isEnableLedgeGrab = getConfig().isEnableLedgeGrab;
 
         timeDelayDash = getConfig().timeDelayDash;
@@ -92,6 +96,7 @@ public class EnhancedMovement implements ModInitializer {
         minimumVerticalVelocity = getConfig().minimumVerticalVelocity;
         fixedJumpBoost = getConfig().fixedJumpBoost;
         dashSpeed =  getConfig().dashSpeed;
+        inAirDashSpeed =  getConfig().inAirDashSpeed;
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
@@ -240,28 +245,43 @@ public class EnhancedMovement implements ModInitializer {
     }
 
     private void performDash(KeyBinding key) {
+
+        if(isInAir == true && isEnableAirDash == false) {
+            return;
+        }
+        
         if (client.player != null) {
             
+            Float _airDashSpeed = inAirDashSpeed;
+            Float _dashSpeed;
+            Float _upwardLift = 0f;
+            if(_airDashSpeed != null && isInAir == true) {
+                _dashSpeed = inAirDashSpeed;
+            } else {
+                _dashSpeed = dashSpeed;
+                _upwardLift = 0.3f;
+            }
+
             double playerYaw = Math.toRadians(client.player.getYaw());
-            double offsetX = -Math.sin(playerYaw) * dashSpeed;
-            double offsetZ = Math.cos(playerYaw) * dashSpeed;
+            double offsetX = -Math.sin(playerYaw) * _dashSpeed;
+            double offsetZ = Math.cos(playerYaw) * _dashSpeed;
 
             if (key == client.options.forwardKey) {
-                client.player.setVelocity(client.player.getVelocity().add(offsetX, 0, offsetZ));
-                NetworkHandler.sendDashPacket(client.player, offsetX, 0, offsetZ);
+                client.player.setVelocity(client.player.getVelocity().add(offsetX, _upwardLift, offsetZ));
+                NetworkHandler.sendDashPacket(client.player, offsetX, _upwardLift, offsetZ);
             } else if (key == client.options.backKey) {
-                client.player.setVelocity(client.player.getVelocity().subtract(offsetX, 0, offsetZ));
-                NetworkHandler.sendDashPacket(client.player, -offsetX, 0, -offsetZ);
+                client.player.setVelocity(client.player.getVelocity().subtract(offsetX, _upwardLift, offsetZ));
+                NetworkHandler.sendDashPacket(client.player, -offsetX, _upwardLift, -offsetZ);
             } else if (key == client.options.leftKey) {
                 double leftOffsetX = Math.cos(playerYaw) * dashSpeed;
                 double leftOffsetZ = Math.sin(playerYaw) * dashSpeed;
-                client.player.setVelocity(client.player.getVelocity().add(leftOffsetX, 0, leftOffsetZ));
-                NetworkHandler.sendDashPacket(client.player, leftOffsetX, 0, leftOffsetZ);
+                client.player.setVelocity(client.player.getVelocity().add(leftOffsetX, _upwardLift, leftOffsetZ));
+                NetworkHandler.sendDashPacket(client.player, leftOffsetX, _upwardLift, leftOffsetZ);
             } else if (key == client.options.rightKey) {
                 double rightOffsetX = -Math.cos(playerYaw) * dashSpeed;
                 double rightOffsetZ = -Math.sin(playerYaw) * dashSpeed;
-                client.player.setVelocity(client.player.getVelocity().add(rightOffsetX, 0, rightOffsetZ));
-                NetworkHandler.sendDashPacket(client.player, rightOffsetX, 0, rightOffsetZ);
+                client.player.setVelocity(client.player.getVelocity().add(rightOffsetX, _upwardLift, rightOffsetZ));
+                NetworkHandler.sendDashPacket(client.player, rightOffsetX, _upwardLift, rightOffsetZ);
             }
         }
     }

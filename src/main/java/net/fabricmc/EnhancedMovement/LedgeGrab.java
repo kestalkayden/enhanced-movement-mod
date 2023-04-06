@@ -1,6 +1,5 @@
 package net.fabricmc.EnhancedMovement;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.client.MinecraftClient;
