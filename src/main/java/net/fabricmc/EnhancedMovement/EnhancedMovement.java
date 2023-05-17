@@ -4,7 +4,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.client.util.InputUtil;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,7 +102,7 @@ public class EnhancedMovement implements ModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
 
-                boolean isSneaking = InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), client.options.sneakKey.getDefaultKey().getCode());
+                boolean isSneaking = client.options.sneakKey.isPressed();
                 if(isSneaking && isSneakDisableFeatures == true) {
                     return;
                 }
@@ -115,10 +114,10 @@ public class EnhancedMovement implements ModInitializer {
                     KeyBinding rightKey = client.options.rightKey;
 
                     // Movement Bools
-                    if (InputUtil.isKeyPressed(client.getWindow().getHandle(), forwardKey.getDefaultKey().getCode())) { forwardPressed = true; } else { forwardPressed = false; }
-                    if (InputUtil.isKeyPressed(client.getWindow().getHandle(), leftKey.getDefaultKey().getCode())) { leftPressed = true; } else { leftPressed = false; }
-                    if (InputUtil.isKeyPressed(client.getWindow().getHandle(), rightKey.getDefaultKey().getCode())) { rightPressed = true; } else { rightPressed = false; }
-                    if (InputUtil.isKeyPressed(client.getWindow().getHandle(), backKey.getDefaultKey().getCode())) { backPressed = true; } else { backPressed = false; }
+                    forwardPressed = forwardKey.isPressed();
+                    leftPressed = leftKey.isPressed();
+                    rightPressed = rightKey.isPressed();
+                    backPressed = backKey.isPressed();
 
                     handleDash(forwardKey, forwardPressed, forwardPressTime, forwardCooldownTime, forwardKeyReleased, globalCooldownTime, forwardPressHandled);
                     handleDash(backKey, backPressed, backPressTime, backCooldownTime, backKeyReleased, globalCooldownTime, backPressHandled);
@@ -130,7 +129,7 @@ public class EnhancedMovement implements ModInitializer {
                 
                 if(isEnableDoubleJump) {
                     boolean onGround = client.player.isOnGround();
-                    jumpKeyPressed = InputUtil.isKeyPressed(client.getWindow().getHandle(), client.options.jumpKey.getDefaultKey().getCode());
+                    jumpKeyPressed = client.options.jumpKey.isPressed();
 
                     // Handle the initial jump
                     if (jumpKeyPressed && !isInAir) {
