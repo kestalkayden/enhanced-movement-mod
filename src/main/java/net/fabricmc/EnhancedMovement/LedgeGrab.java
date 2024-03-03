@@ -58,7 +58,7 @@ public class LedgeGrab {
     public boolean isEmpty(BlockPos blockPos) {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
         World world = player.getWorld();
-        BlockState blockState = player.world.getBlockState(blockPos);
+        BlockState blockState = world.getBlockState(blockPos);
         VoxelShape voxelShape = blockState.getCollisionShape(world, blockPos, ShapeContext.of(player));
         return voxelShape.isEmpty();
     }

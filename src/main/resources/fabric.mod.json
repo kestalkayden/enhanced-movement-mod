@@ -4,7 +4,7 @@
   "version": "${version}",
 
   "name": "Enhanced Movement",
-  "description": "A mod that enabled a quick and dirty double jump and dash in any direction! Works on all 1.19.* versions.",
+  "description": "A mod that enabled a quick and dirty double jump and dash in any direction! Works on all 1.20.* versions.",
   "authors": [
     "Kestalkayden"
   ],
