@@ -4,7 +4,7 @@
   "version": "${version}",
 
   "name": "Enhanced Movement",
-  "description": "A mod that enabled a quick and dirty double jump and dash in any direction! Works on all 1.20.* versions.",
+  "description": "A mod that enables double jump, dash in any direction, and ledge grabbing! Enhanced with modern config GUI.",
   "authors": [
     "Kestalkayden"
   ],
@@ -14,27 +14,30 @@
   },
 
   "license": "CC0-1.0",
-  "icon": "assets/EnhancedMovement/icon.png",
+  "icon": "assets/enhancedmovement/icon.png",
 
   "environment": "*",
   "entrypoints": {
     "main": [
       "net.fabricmc.EnhancedMovement.EnhancedMovement"
+    ],
+    "client": [
+      "net.fabricmc.EnhancedMovement.client.EnhancedMovementClient"
+    ],
+    "modmenu": [
+      "net.fabricmc.EnhancedMovement.client.ModMenuIntegration"
     ]
   },
   "mixins": [
     "enhancedmovement.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.14.17",
-    "fabric": "*",
-    "minecraft": [
-      "1.19.*",
-      "1.20.*"
-    ],
-    "java": ">=17"
+    "fabricloader": ">=0.16.14",
+    "minecraft": "~1.21.8",
+    "java": ">=21",
+    "fabric-api": "*"
   },
   "suggests": {
-    "another-mod": "*"
+    "modmenu": "*"
   }
 }

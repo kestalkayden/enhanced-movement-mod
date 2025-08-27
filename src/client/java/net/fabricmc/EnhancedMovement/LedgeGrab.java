@@ -7,6 +7,8 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.World;
+import net.fabricmc.EnhancedMovement.config.EnhancedMovementConfig;
+import me.shedaniel.autoconfig.AutoConfig;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -14,18 +16,29 @@ import java.util.List;
 public class LedgeGrab {
 
     public void tick() {
-
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
+
+        // Get config
+        EnhancedMovementConfig config = AutoConfig.getConfigHolder(EnhancedMovementConfig.class).getConfig();
+        
+        // Check if ledge grab is enabled
+        if (!config.movement.doubleJump.enableLedgeGrab) return;
 
         boolean jumpKeyIsPressed = client.options.jumpKey.isPressed();
         if (!jumpKeyIsPressed) return;
         if (!isNearLedge(player.getBlockPos())) return;
 
+        if (player.getHungerManager().getFoodLevel() < 6) {
+            return;
+        }
 
-        player.setVelocity(player.getVelocity().x, 0.4f, player.getVelocity().z);
-        // Stamina Player's consumption
-        player.addExhaustion(3000000.0F);
+        float ledgeGrabBoost = 0.5f; // 50% boost
+
+        player.setVelocity(player.getVelocity().x, ledgeGrabBoost, player.getVelocity().z);
+        player.velocityModified = true;
+        
+        player.addExhaustion(0.15f);
     }
 
     public boolean isNearLedge(@NotNull BlockPos blockPos) {

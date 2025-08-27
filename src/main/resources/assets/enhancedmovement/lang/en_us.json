@@ -1,0 +1,45 @@
+{
+  "text.autoconfig.enhancedmovement.title": "Enhanced Movement Config",
+  "text.autoconfig.enhancedmovement.category.movement": "Movement Settings",
+  
+  "text.autoconfig.enhancedmovement.option.movement.doubleJump": "Double Jump & Ledge Grab",
+  "text.autoconfig.enhancedmovement.option.movement.doubleJump.enabled": "Enable Double Jump",
+  "text.autoconfig.enhancedmovement.option.movement.doubleJump.enabled.@Tooltip": "Enable or disable the double jump functionality entirely",
+  
+  "text.autoconfig.enhancedmovement.option.movement.doubleJump.jumpBoostPercent": "Jump Power (%)",
+  "text.autoconfig.enhancedmovement.option.movement.doubleJump.jumpBoostPercent.@Tooltip[0]": "Strength of the double jump boost in percentage",
+  "text.autoconfig.enhancedmovement.option.movement.doubleJump.jumpBoostPercent.@Tooltip[1]": "40% = 4 blocks boost, higher values = higher double jump",
+  
+  "text.autoconfig.enhancedmovement.option.movement.doubleJump.delayBeforeDoubleJumpMs": "Double Jump Delay (ms)",
+  "text.autoconfig.enhancedmovement.option.movement.doubleJump.delayBeforeDoubleJumpMs.@Tooltip[0]": "Time to wait after initial jump before allowing double jump",
+  "text.autoconfig.enhancedmovement.option.movement.doubleJump.delayBeforeDoubleJumpMs.@Tooltip[1]": "250ms = responsive, 500ms = more deliberate timing",
+  
+  "text.autoconfig.enhancedmovement.option.movement.doubleJump.enableLedgeGrab": "Enable Ledge Grab",
+  "text.autoconfig.enhancedmovement.option.movement.doubleJump.enableLedgeGrab.@Tooltip[0]": "Enable ledge grab assist when holding jump near edges",
+  "text.autoconfig.enhancedmovement.option.movement.doubleJump.enableLedgeGrab.@Tooltip[1]": "Helps 'stick the landing' when you almost reach a ledge. Uses 50% boost strength.",
+  
+  "text.autoconfig.enhancedmovement.option.movement.dash": "Dash Movement",
+  "text.autoconfig.enhancedmovement.option.movement.dash.enabled": "Enable Dash",
+  "text.autoconfig.enhancedmovement.option.movement.dash.enabled.@Tooltip": "Enable or disable the dash functionality entirely",
+  
+  "text.autoconfig.enhancedmovement.option.movement.dash.cooldownSeconds": "Dash Cooldown (Seconds)",
+  "text.autoconfig.enhancedmovement.option.movement.dash.cooldownSeconds.@Tooltip[0]": "Time between dashes in seconds",
+  "text.autoconfig.enhancedmovement.option.movement.dash.cooldownSeconds.@Tooltip[1]": "1 = 1 second cooldown, 2 = 2 second cooldown",
+  
+  "text.autoconfig.enhancedmovement.option.movement.dash.useKeybinds": "Use Single Keybind",
+  "text.autoconfig.enhancedmovement.option.movement.dash.useKeybinds.@Tooltip[0]": "Choose activation: false = double-tap movement keys, true = single keybind while moving",
+  "text.autoconfig.enhancedmovement.option.movement.dash.useKeybinds.@Tooltip[1]": "Keybind mode: hold W+click dash key = dash forward. Perfect for mouse side buttons!",
+  
+  "text.autoconfig.enhancedmovement.option.movement.dash.enableAirDash": "Allow Air Dash",
+  "text.autoconfig.enhancedmovement.option.movement.dash.enableAirDash.@Tooltip": "Enable dashing while in the air (not just on ground)",
+  
+  "text.autoconfig.enhancedmovement.option.movement.general": "General Settings",
+  "text.autoconfig.enhancedmovement.option.movement.general.sneakDisablesFeatures": "Disable While Sneaking",
+  "text.autoconfig.enhancedmovement.option.movement.general.sneakDisablesFeatures.@Tooltip[0]": "Disable all enhanced movement features while sneaking",
+  "text.autoconfig.enhancedmovement.option.movement.general.sneakDisablesFeatures.@Tooltip[1]": "Uses same hunger requirement as sprinting (6+ hunger)",
+  
+  "_comment_keybinds": "Keybind translations for Enhanced Movement",
+  
+  "key.categories.enhancedmovement": "Enhanced Movement",
+  "key.enhancedmovement.dash": "Dash"
+}
