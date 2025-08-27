@@ -9,6 +9,7 @@ import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class NetworkHandler {
     
     public static final Identifier DOUBLE_JUMP_PACKET_ID = Identifier.of("enhancedmovement", "double_jump");
+    public static final Identifier AFTERIMAGE_PACKET_ID = Identifier.of("enhancedmovement", "afterimage");
     
     // Track double jump data for smart fall damage calculation
     private static final Map<UUID, DoubleJumpData> playerJumpData = new HashMap<>();
@@ -37,8 +39,10 @@ public class NetworkHandler {
     }
     
     public static void initialize() {
-        // Register the payload type
+        // Register payload types
         PayloadTypeRegistry.playC2S().register(DoubleJumpPayload.ID, DoubleJumpPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(AfterimagePayload.ID, AfterimagePayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(AfterimagePayload.ID, AfterimagePayload.CODEC);
         
         // Register server-side packet handler
         ServerPlayNetworking.registerGlobalReceiver(DoubleJumpPayload.ID, (payload, context) -> {
@@ -47,6 +51,15 @@ public class NetworkHandler {
             // Execute on server thread
             context.server().execute(() -> {
                 recordDoubleJump(player, payload.firstJumpY(), payload.doubleJumpY());
+            });
+        });
+        
+        // Register afterimage packet handler (server receives from client, broadcasts to others)
+        ServerPlayNetworking.registerGlobalReceiver(AfterimagePayload.ID, (payload, context) -> {
+            ServerPlayerEntity player = context.player();
+            
+            context.server().execute(() -> {
+                broadcastAfterimageToNearbyPlayers(player, payload);
             });
         });
         
@@ -110,6 +123,19 @@ public class NetworkHandler {
         );
     }
     
+    private static void broadcastAfterimageToNearbyPlayers(ServerPlayerEntity dashingPlayer, AfterimagePayload payload) {
+        // Broadcast to all players within 64 blocks (including the dashing player for self-visibility)
+        double maxDistance = 64.0;
+        Vec3d dashingPlayerPos = dashingPlayer.getPos();
+        
+        for (ServerPlayerEntity nearbyPlayer : dashingPlayer.getServer().getPlayerManager().getPlayerList()) {
+            double distance = nearbyPlayer.getPos().distanceTo(dashingPlayerPos);
+            if (distance <= maxDistance) {
+                ServerPlayNetworking.send(nearbyPlayer, payload);
+            }
+        }
+    }
+    
     public record DoubleJumpPayload(double firstJumpY, double doubleJumpY) implements CustomPayload {
         public static final CustomPayload.Id<DoubleJumpPayload> ID = new CustomPayload.Id<>(DOUBLE_JUMP_PACKET_ID);
         
@@ -119,6 +145,43 @@ public class NetworkHandler {
                 buf.writeDouble(value.doubleJumpY);
             },
             buf -> new DoubleJumpPayload(buf.readDouble(), buf.readDouble())
+        );
+        
+        @Override
+        public CustomPayload.Id<? extends CustomPayload> getId() {
+            return ID;
+        }
+    }
+    
+    public record AfterimagePayload(
+        UUID playerId,
+        double startX, double startY, double startZ,
+        double endX, double endY, double endZ,
+        float yaw, float pitch,
+        int imageCount
+    ) implements CustomPayload {
+        public static final CustomPayload.Id<AfterimagePayload> ID = new CustomPayload.Id<>(AFTERIMAGE_PACKET_ID);
+        
+        public static final PacketCodec<PacketByteBuf, AfterimagePayload> CODEC = PacketCodec.of(
+            (value, buf) -> {
+                buf.writeUuid(value.playerId);
+                buf.writeDouble(value.startX);
+                buf.writeDouble(value.startY);
+                buf.writeDouble(value.startZ);
+                buf.writeDouble(value.endX);
+                buf.writeDouble(value.endY);
+                buf.writeDouble(value.endZ);
+                buf.writeFloat(value.yaw);
+                buf.writeFloat(value.pitch);
+                buf.writeInt(value.imageCount);
+            },
+            buf -> new AfterimagePayload(
+                buf.readUuid(),
+                buf.readDouble(), buf.readDouble(), buf.readDouble(),
+                buf.readDouble(), buf.readDouble(), buf.readDouble(),
+                buf.readFloat(), buf.readFloat(),
+                buf.readInt()
+            )
         );
         
         @Override

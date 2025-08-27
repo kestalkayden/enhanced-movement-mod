@@ -32,6 +32,23 @@
   
   "text.autoconfig.enhancedmovement.option.movement.dash.enableAirDash": "Allow Air Dash",
   "text.autoconfig.enhancedmovement.option.movement.dash.enableAirDash.@Tooltip": "Enable dashing while in the air (not just on ground)",
+
+  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage": "Afterimage Effects",
+  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.enabled": "Enable Afterimages",
+  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.enabled.@Tooltip[0]": "Show Sandevistan-style afterimages when dashing",
+  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.enabled.@Tooltip[1]": "Visible to all nearby players for enhanced multiplayer experience",
+
+  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.imageCount": "Afterimage Count",
+  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.imageCount.@Tooltip[0]": "Number of afterimages to create along the dash path",
+  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.imageCount.@Tooltip[1]": "12 = balanced trail, 25 = ultra-dense matrix effect, 6 = minimal performance impact",
+
+  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.baseLifetimeMs": "Fade Duration (tens of ms)",
+  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.baseLifetimeMs.@Tooltip[0]": "Base fade time for afterimages (in tens of milliseconds)",
+  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.baseLifetimeMs.@Tooltip[1]": "80 = 800ms base, later afterimages last progressively longer for matrix effect",
+
+  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.prismMode": "Prism Mode",
+  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.prismMode.@Tooltip[0]": "Enable rainbow spectrum colors for afterimages",
+  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.prismMode.@Tooltip[1]": "Cycles through red, orange, yellow, green, blue, indigo, violet instead of cyan",
   
   "text.autoconfig.enhancedmovement.option.movement.general": "General Settings",
   "text.autoconfig.enhancedmovement.option.movement.general.sneakDisablesFeatures": "Disable While Sneaking",

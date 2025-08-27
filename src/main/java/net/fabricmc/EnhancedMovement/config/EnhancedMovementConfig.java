@@ -55,6 +55,26 @@ public class EnhancedMovementConfig implements ConfigData {
         
         @ConfigEntry.Gui.Tooltip(count = 1)
         public boolean enableAirDash = true;
+        
+        @ConfigEntry.Gui.CollapsibleObject
+        public AfterimageConfig afterimage = new AfterimageConfig();
+    }
+    
+    public static class AfterimageConfig {
+        
+        @ConfigEntry.Gui.Tooltip(count = 2)
+        public boolean enabled = true;
+        
+        @ConfigEntry.Gui.Tooltip(count = 2)
+        @ConfigEntry.BoundedDiscrete(min = 6, max = 25)
+        public int imageCount = 16;
+        
+        @ConfigEntry.Gui.Tooltip(count = 2)
+        @ConfigEntry.BoundedDiscrete(min = 30, max = 150)
+        public int baseLifetimeMs = 80;
+        
+        @ConfigEntry.Gui.Tooltip(count = 2)
+        public boolean prismMode = false;
     }
     
     public static class GeneralConfig {

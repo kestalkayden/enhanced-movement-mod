@@ -3,18 +3,24 @@ package net.fabricmc.EnhancedMovement.client;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.EnhancedMovement.NetworkHandler;
 import net.fabricmc.EnhancedMovement.config.EnhancedMovementConfig;
 import net.fabricmc.EnhancedMovement.LedgeGrab;
 import net.fabricmc.EnhancedMovement.client.ClientNetworkHandler;
+import net.fabricmc.EnhancedMovement.client.AfterimageManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.Vec3d;
 import me.shedaniel.autoconfig.AutoConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.lwjgl.glfw.GLFW;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.UUID;
 
 public class EnhancedMovementClient implements ClientModInitializer {
     
@@ -37,6 +43,17 @@ public class EnhancedMovementClient implements ClientModInitializer {
     private boolean backPressed = false;
     private boolean leftPressed = false;
     private boolean rightPressed = false;
+    
+    // Dash tracking for afterimages
+    private boolean isDashTracking = false;
+    private long dashTrackingStartTime = 0;
+    private Vec3d dashStartPosition = null;
+    private UUID dashingPlayerId = null;
+    private float dashYaw = 0;
+    private float dashPitch = 0;
+    private int afterimagesSpawned = 0;
+    private Vec3d lastPlayerPosition = null;
+    private long lastMovementTime = 0;
 
     private AtomicLong forwardPressTime = new AtomicLong(0);
     private AtomicLong backPressTime = new AtomicLong(0);
@@ -71,6 +88,50 @@ public class EnhancedMovementClient implements ClientModInitializer {
             "key.categories.enhancedmovement"
         ));
 
+        // Register afterimage packet receiver
+        ClientPlayNetworking.registerGlobalReceiver(NetworkHandler.AfterimagePayload.ID, (payload, context) -> {
+            context.client().execute(() -> {
+                EnhancedMovementConfig config = AutoConfig.getConfigHolder(EnhancedMovementConfig.class).getConfig();
+                if (config.movement.dash.afterimage.enabled) {
+                    Vec3d position = new Vec3d(payload.startX(), payload.startY(), payload.startZ());
+                    
+                    // For multiplayer packets, create a single afterimage at the received position
+                    AfterimageManager.addSingleAfterimage(
+                        payload.playerId(), 
+                        position, 
+                        payload.yaw(), 
+                        payload.pitch(), 
+                        config.movement.dash.afterimage.baseLifetimeMs,
+                        0L // No spawn delay for multiplayer packets
+                    );
+                }
+            });
+        });
+
+        // Register afterimage renderer
+        WorldRenderEvents.AFTER_ENTITIES.register((context) -> {
+            // Skip rendering if afterimages are disabled (disables viewing ALL afterimages)
+            EnhancedMovementConfig config = AutoConfig.getConfigHolder(EnhancedMovementConfig.class).getConfig();
+            if (!config.movement.dash.afterimage.enabled) return;
+            
+            var matrices = context.matrixStack();
+            var vertexConsumers = context.consumers();
+            int light = 15728880; // Full bright light
+            
+            for (AfterimageManager.AfterimageData afterimage : AfterimageManager.getActiveAfterimages()) {
+                if (afterimage.getOpacity() > 0.0f) {
+                    // Skip afterimages too close to camera in first person to avoid visual clutter
+                    Vec3d cameraPos = client.gameRenderer.getCamera().getPos();
+                    double distanceToCamera = afterimage.position.distanceTo(cameraPos);
+                    boolean isFirstPerson = client.options.getPerspective().isFirstPerson();
+                    
+                    if (!isFirstPerson || distanceToCamera > 1.5) {
+                        AfterimageRenderer.renderAfterimage(matrices, vertexConsumers, afterimage, light);
+                    }
+                }
+            }
+        });
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
                 EnhancedMovementConfig config = AutoConfig.getConfigHolder(EnhancedMovementConfig.class).getConfig();
@@ -95,6 +156,12 @@ public class EnhancedMovementClient implements ClientModInitializer {
                 if (config.movement.doubleJump.enableLedgeGrab) {
                     ledgeGrab.tick();
                 }
+                
+                // Tick afterimage manager
+                AfterimageManager.tick();
+                
+                // Handle dash tracking for real-time afterimage spawning
+                handleDashTracking(config);
             }
         });
     }
@@ -294,14 +361,17 @@ public class EnhancedMovementClient implements ClientModInitializer {
         }
         
         if (client.player != null) {
-            // Check hunger level requirement (same as sprinting)
             if (client.player.getHungerManager().getFoodLevel() < 6) {
                 return;
             }
             
-            // Use fixed dash speeds like Burst Boots
-            float dashSpeed = 1.5f; // Ground dash speed (matches Burst Boots)
-            float inAirDashSpeed = 1.2f; // Air dash speed
+            // Capture start position for afterimages
+            Vec3d startPos = client.player.getPos();
+            float yaw = client.player.getYaw();
+            float pitch = client.player.getPitch();
+            
+            float dashSpeed = 1.5f;
+            float inAirDashSpeed = 1.2f;
             
             float _dashSpeed;
             float _upwardLift = 0f;
@@ -316,25 +386,35 @@ public class EnhancedMovementClient implements ClientModInitializer {
             double offsetX = -Math.sin(playerYaw) * _dashSpeed;
             double offsetZ = Math.cos(playerYaw) * _dashSpeed;
 
+            Vec3d dashVector = Vec3d.ZERO;
+            
             if (key == client.options.forwardKey) {
+                dashVector = new Vec3d(offsetX, _upwardLift, offsetZ);
                 client.player.setVelocity(client.player.getVelocity().add(offsetX, _upwardLift, offsetZ));
                 client.player.velocityModified = true;
             } else if (key == client.options.backKey) {
+                dashVector = new Vec3d(-offsetX, _upwardLift, -offsetZ);
                 client.player.setVelocity(client.player.getVelocity().subtract(offsetX, _upwardLift, offsetZ));
                 client.player.velocityModified = true;
             } else if (key == client.options.leftKey) {
                 double leftOffsetX = Math.cos(playerYaw) * _dashSpeed;
                 double leftOffsetZ = Math.sin(playerYaw) * _dashSpeed;
+                dashVector = new Vec3d(leftOffsetX, _upwardLift, leftOffsetZ);
                 client.player.setVelocity(client.player.getVelocity().add(leftOffsetX, _upwardLift, leftOffsetZ));
                 client.player.velocityModified = true;
             } else if (key == client.options.rightKey) {
                 double rightOffsetX = -Math.cos(playerYaw) * _dashSpeed;
                 double rightOffsetZ = -Math.sin(playerYaw) * _dashSpeed;
+                dashVector = new Vec3d(rightOffsetX, _upwardLift, rightOffsetZ);
                 client.player.setVelocity(client.player.getVelocity().add(rightOffsetX, _upwardLift, rightOffsetZ));
                 client.player.velocityModified = true;
             }
             
-            // Add hunger exhaustion (like sprinting)
+            // Start real-time dash tracking for accurate afterimage placement
+            if (config.movement.dash.afterimage.enabled) {
+                startDashTracking(client.player.getUuid(), startPos, yaw, pitch);
+            }
+            
             client.player.addExhaustion(0.1f);
         }
     }
@@ -358,6 +438,90 @@ public class EnhancedMovementClient implements ClientModInitializer {
         jumpKeyReleased = false;
         jumpKeyPressed = false;
         jumpStartTime = 0;
+    }
+    
+    private void startDashTracking(UUID playerId, Vec3d startPos, float yaw, float pitch) {
+        isDashTracking = true;
+        dashTrackingStartTime = System.currentTimeMillis();
+        dashStartPosition = startPos;
+        dashingPlayerId = playerId;
+        dashYaw = yaw;
+        dashPitch = pitch;
+        afterimagesSpawned = 0; // Reset counter
+        lastPlayerPosition = startPos;
+        lastMovementTime = System.currentTimeMillis();
+        
+        // Create the first afterimage with slight delay to avoid first-person clutter
+        EnhancedMovementConfig config = AutoConfig.getConfigHolder(EnhancedMovementConfig.class).getConfig();
+        AfterimageManager.addSingleAfterimage(playerId, startPos, yaw, pitch, 
+            config.movement.dash.afterimage.baseLifetimeMs, 50L, config.movement.dash.afterimage.prismMode);
+        afterimagesSpawned++; // Count the first one
+    }
+    
+    private void handleDashTracking(EnhancedMovementConfig config) {
+        if (!isDashTracking || client.player == null) return;
+        
+        long currentTime = System.currentTimeMillis();
+        long elapsedTime = currentTime - dashTrackingStartTime;
+        
+        // Track for longer duration to capture full dash movement, especially jump dashes
+        long trackingDuration = 750L; // Extended to 750ms for full double jump + sideways dash coverage
+        if (elapsedTime > trackingDuration) {
+            isDashTracking = false;
+            return;
+        }
+        
+        // Check if we should spawn the next afterimage based on config count
+        int maxAfterimages = config.movement.dash.afterimage.imageCount;
+        // Remove minimum interval constraint to allow very dense trails
+        long spawnInterval = trackingDuration / maxAfterimages;
+        long nextSpawnTime = afterimagesSpawned * spawnInterval;
+        
+        // Spawn if it's time for the next afterimage and we haven't hit the limit
+        if (elapsedTime >= nextSpawnTime && afterimagesSpawned < maxAfterimages) {
+            Vec3d currentPos = client.player.getPos();
+            
+            // Check if player has stopped moving - if so, end tracking early
+            double movementDistance = lastPlayerPosition != null ? currentPos.distanceTo(lastPlayerPosition) : 1.0;
+            if (movementDistance > 0.1) {
+                lastMovementTime = currentTime;
+                lastPlayerPosition = currentPos;
+            } else if (currentTime - lastMovementTime > 150) {
+                // Player has been stationary for 150ms, end tracking to prevent stationary afterimages
+                isDashTracking = false;
+                return;
+            }
+            
+            // Only spawn if player has moved some distance from start (reduced requirement)
+            double distanceFromStart = currentPos.distanceTo(dashStartPosition);
+            if (distanceFromStart > 0.2) {
+                // Send to server for multiplayer visibility
+                Vec3d fakeEndPos = currentPos.add(0, 0, 0); // Not used in new system
+                ClientNetworkHandler.sendAfterimageData(
+                    dashingPlayerId, 
+                    currentPos, 
+                    fakeEndPos, 
+                    dashYaw, 
+                    dashPitch, 
+                    1 // Single afterimage
+                );
+                
+                // Create local afterimage at current position
+                long spawnDelay = Math.max(0, elapsedTime - 35); // Reduced delay for more responsive effect
+                AfterimageManager.addSingleAfterimage(
+                    dashingPlayerId, 
+                    currentPos, 
+                    dashYaw, 
+                    dashPitch,
+                    config.movement.dash.afterimage.baseLifetimeMs,
+                    spawnDelay,
+                    config.movement.dash.afterimage.prismMode
+                );
+                
+                // Increment counter
+                afterimagesSpawned++;
+            }
+        }
     }
 
 }
