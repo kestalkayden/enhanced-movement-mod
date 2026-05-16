@@ -1,0 +1,68 @@
+plugins {
+    id 'net.neoforged.moddev' version "${moddev_version}"
+    id 'maven-publish'
+}
+
+base.archivesName = "${project.archives_base_name}-neoforge"
+
+neoForge {
+    version = neoforge_version
+    validateAccessTransformers = false
+
+    mods {
+        enhancedmovement {
+            sourceSet sourceSets.main
+        }
+    }
+
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+        }
+        data {
+            data()
+        }
+    }
+}
+
+dependencies {
+    implementation "me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}"
+}
+
+processResources {
+    inputs.property "version", project.version
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from('../shared-resources/assets/enhancedmovement') {
+        into 'assets/enhancedmovement'
+    }
+
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand "version": project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 25
+}
+
+java {
+    withSourcesJar()
+}
+
+jar {
+    from("../LICENSE") {
+        rename { "${it}_${base.archivesName.get()}" }
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}

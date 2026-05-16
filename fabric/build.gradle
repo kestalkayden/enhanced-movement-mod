@@ -1,0 +1,73 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
+    id 'maven-publish'
+}
+
+base.archivesName = "${project.archives_base_name}-fabric"
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+
+    implementation "net.fabricmc:fabric-loader:${loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+
+    // Config dependencies
+    implementation "me.shedaniel.cloth:cloth-config-fabric:${cloth_config_version}"
+    implementation "com.terraformersmc:modmenu:${modmenu_version}"
+}
+
+loom {
+    splitEnvironmentSourceSets()
+
+    mods {
+        "enhancedmovement" {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+
+    runs {
+        client {
+            runDir = "../run"
+        }
+        server {
+            runDir = "../run"
+        }
+    }
+}
+
+processResources {
+    inputs.property "version", project.version
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    // Copy shared assets
+    from('../shared-resources') {
+        exclude '**/*.java'
+    }
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 25
+}
+
+java {
+    withSourcesJar()
+}
+
+jar {
+    from("../LICENSE") {
+        rename { "${it}_${base.archivesName.get()}" }
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}

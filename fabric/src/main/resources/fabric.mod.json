@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "enhancedmovement",
+  "version": "${version}",
+
+  "name": "Enhanced Movement",
+  "description": "Double jump, dash in any direction, ledge grab, and afterimages — built for Minecraft 26.1+.",
+  "authors": [
+    "Kestalkayden"
+  ],
+  "contact": {
+    "homepage": "https://github.com/kestalkayden/enhanced-movement-mod",
+    "sources": "https://github.com/kestalkayden/enhanced-movement-mod"
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/enhancedmovement/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.enhancedmovement.kestalkayden.EnhancedMovement"
+    ],
+    "client": [
+      "com.enhancedmovement.kestalkayden.client.EnhancedMovementClient"
+    ],
+    "modmenu": [
+      "com.enhancedmovement.kestalkayden.client.ModMenuIntegration"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.4",
+    "minecraft": ">=26.1 <26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}
