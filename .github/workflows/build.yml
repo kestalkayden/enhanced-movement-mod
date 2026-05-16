@@ -1,8 +1,12 @@
-# Build both loader subprojects on every push and pull request.
-# Uses Java 25 to match the project toolchain (Minecraft 26.1+).
+# Build both loader subprojects on every push / PR, and auto-publish to
+# Modrinth + CurseForge whenever a v* tag is pushed.
 
 name: build
-on: [pull_request, push]
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
 
 jobs:
   build:
@@ -29,13 +33,74 @@ jobs:
       - name: upload fabric jar
         uses: actions/upload-artifact@v4
         with:
-          name: fabric
+          name: fabric-jars
           path: fabric/build/libs/*.jar
           if-no-files-found: error
 
       - name: upload neoforge jar
         uses: actions/upload-artifact@v4
         with:
-          name: neoforge
+          name: neoforge-jars
           path: neoforge/build/libs/*.jar
           if-no-files-found: error
+
+  publish:
+    name: publish to Modrinth and CurseForge
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: download fabric jars
+        uses: actions/download-artifact@v4
+        with:
+          name: fabric-jars
+          path: fabric/build/libs
+
+      - name: download neoforge jars
+        uses: actions/download-artifact@v4
+        with:
+          name: neoforge-jars
+          path: neoforge/build/libs
+
+      - name: publish fabric
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: enhanced-movement
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: 843764
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ github.ref_name }}
+          files: |
+            fabric/build/libs/!(*-@(sources|javadoc)).jar
+          loaders: fabric
+          game-versions: |
+            26.1
+            26.1.1
+            26.1.2
+          version-type: release
+          java: 25
+
+      - name: publish neoforge
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: enhanced-movement
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: 843764
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ github.ref_name }}
+          files: |
+            neoforge/build/libs/!(*-@(sources|javadoc)).jar
+          loaders: neoforge
+          game-versions: |
+            26.1
+            26.1.1
+            26.1.2
+          version-type: release
+          java: 25
