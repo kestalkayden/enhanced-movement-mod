@@ -56,7 +56,7 @@
   "text.autoconfig.enhancedmovement.option.movement.general.sneakDisablesFeatures.@Tooltip[1]": "Uses same hunger requirement as sprinting (6+ hunger)",
   
   "_comment_keybinds": "Keybind translations for Enhanced Movement",
-  
-  "key.categories.enhancedmovement": "Enhanced Movement",
+
+  "key.category.enhancedmovement.main": "Enhanced Movement",
   "key.enhancedmovement.dash": "Dash"
 }
