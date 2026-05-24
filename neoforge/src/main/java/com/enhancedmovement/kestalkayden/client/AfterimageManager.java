@@ -1,5 +1,6 @@
 package com.enhancedmovement.kestalkayden.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -10,7 +11,7 @@ import java.util.UUID;
 public class AfterimageManager {
 
     private static final List<AfterimageData> activeAfterimages = new ArrayList<>();
-    private static final int MAX_AFTERIMAGES = 50;
+    private static final int MAX_AFTERIMAGES = 60;
 
     public static class AfterimageData {
         public Vec3 position;
@@ -21,6 +22,18 @@ public class AfterimageManager {
         public UUID playerId;
         public boolean prismMode = false;
 
+        // Pinned at spawn — render path reads these instead of re-rolling RNG every frame.
+        public final float armSwing;
+        public final float legSwing;
+        public final float armHeight;
+        public final float baseRed;
+        public final float baseGreen;
+        public final float baseBlue;
+        public final boolean hasOverrideColor;
+        public final float overrideRed;
+        public final float overrideGreen;
+        public final float overrideBlue;
+
         public AfterimageData(Vec3 position, float yaw, float pitch, float maxLifetime, UUID playerId, long spawnDelay) {
             this.position = position;
             this.yaw = yaw;
@@ -29,6 +42,31 @@ public class AfterimageManager {
             this.spawnDelay = spawnDelay;
             this.maxLifetime = maxLifetime;
             this.playerId = playerId;
+
+            this.armSwing = (float) (Math.random() * 0.6 - 0.3);
+            this.legSwing = (float) (Math.random() * 0.4 - 0.2);
+            this.armHeight = (float) (Math.random() * 0.2 - 0.1);
+
+            this.baseRed = (float) (Math.random() * 0.1);
+            this.baseGreen = 0.8f + (float) (Math.random() * 0.2 - 0.1);
+            this.baseBlue = 0.9f + (float) (Math.random() * 0.1);
+
+            float[] override = resolveOverrideColor(playerId);
+            this.hasOverrideColor = override != null;
+            this.overrideRed = override != null ? override[0] : 0f;
+            this.overrideGreen = override != null ? override[1] : 0f;
+            this.overrideBlue = override != null ? override[2] : 0f;
+        }
+
+        private static float[] resolveOverrideColor(UUID playerId) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.level == null) return null;
+            var player = mc.level.getPlayerByUUID(playerId);
+            if (player == null) return null;
+            if ("kestalkayden".equalsIgnoreCase(player.getName().getString())) {
+                return new float[]{1.0f, 0.0f, 0.0f};
+            }
+            return null;
         }
 
         public boolean hasSpawned() {
@@ -45,7 +83,7 @@ public class AfterimageManager {
             float age = (currentTime - getSpawnTime()) / 1000.0f;
             if (age >= maxLifetime) return 0.0f;
             float progress = age / maxLifetime;
-            return 0.8f * (1.0f - progress);
+            return 0.6f * (1.0f - progress);
         }
 
         public boolean isExpired() {

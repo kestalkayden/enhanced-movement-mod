@@ -11,8 +11,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
-import java.util.UUID;
-
 public class AfterimageRenderer {
 
     private static final Minecraft client = Minecraft.getInstance();
@@ -61,42 +59,21 @@ public class AfterimageRenderer {
         RenderType renderType = RenderTypes.entityTranslucentEmissive(WHITE_TEXTURE);
         VertexConsumer vertexConsumer = vertexConsumers.getBuffer(renderType);
 
-        float[] colors = getPlayerColors(afterimage);
-        float red = colors[0];
-        float green = colors[1];
-        float blue = colors[2];
-
-        renderPlayerSilhouetteParts(matrix, vertexConsumer, red, green, blue, opacity, light);
-    }
-
-    private static float[] getPlayerColors(AfterimageManager.AfterimageData afterimage) {
-        String playerName = getPlayerName(afterimage.playerId);
-        float[] specialColors = getSpecialPlayerColors(playerName);
-        if (specialColors != null) return specialColors;
-        return afterimage.prismMode ? getPrismColors(afterimage) : getMatrixColors();
-    }
-
-    private static String getPlayerName(UUID playerId) {
-        if (client.level != null) {
-            var player = client.level.getPlayerByUUID(playerId);
-            if (player != null) return player.getName().getString();
+        float red, green, blue;
+        if (afterimage.hasOverrideColor) {
+            red = afterimage.overrideRed;
+            green = afterimage.overrideGreen;
+            blue = afterimage.overrideBlue;
+        } else if (afterimage.prismMode) {
+            float[] prism = getPrismColors(afterimage);
+            red = prism[0]; green = prism[1]; blue = prism[2];
+        } else {
+            red = afterimage.baseRed;
+            green = afterimage.baseGreen;
+            blue = afterimage.baseBlue;
         }
-        return "";
-    }
 
-    private static float[] getSpecialPlayerColors(String playerName) {
-        if (playerName == null) return null;
-        if ("kestalkayden".equals(playerName.toLowerCase())) {
-            return new float[]{1.0f, 0.0f, 0.0f};
-        }
-        return null;
-    }
-
-    private static float[] getMatrixColors() {
-        float red = (float) (Math.random() * 0.1);
-        float green = 0.8f + (float) (Math.random() * 0.2 - 0.1);
-        float blue = 0.9f + (float) (Math.random() * 0.1);
-        return new float[]{red, green, blue};
+        renderPlayerSilhouetteParts(matrix, vertexConsumer, red, green, blue, opacity, light, afterimage);
     }
 
     private static float[] getPrismColors(AfterimageManager.AfterimageData afterimage) {
@@ -126,15 +103,16 @@ public class AfterimageRenderer {
     }
 
     private static void renderPlayerSilhouetteParts(Matrix4f matrix, VertexConsumer vc,
-                                                    float red, float green, float blue, float opacity, int light) {
+                                                    float red, float green, float blue, float opacity, int light,
+                                                    AfterimageManager.AfterimageData afterimage) {
         float playerWidth = 0.6f;
         float playerHeight = 1.8f;
         float playerDepth = 0.3f;
 
         float glitchVariation = 0.15f;
-        float armSwing = (float) (Math.random() * 0.6 - 0.3);
-        float legSwing = (float) (Math.random() * 0.4 - 0.2);
-        float armHeight = (float) (Math.random() * 0.2 - 0.1);
+        float armSwing = afterimage.armSwing;
+        float legSwing = afterimage.legSwing;
+        float armHeight = afterimage.armHeight;
 
         float headSize = 0.25f;
         renderBox(matrix, vc,
@@ -189,50 +167,51 @@ public class AfterimageRenderer {
     private static void renderBox(Matrix4f matrix, VertexConsumer vc,
                                   float x1, float y1, float z1, float x2, float y2, float z2,
                                   float red, float green, float blue, float alpha, int light) {
-        // 6 faces, 4 vertices each. Vertex format now includes UV (constant 0.5,0.5 since
-        // the texture is uniform white), overlay (none), light (passed through), and a
-        // per-face normal vector — required by the entity_translucent_emissive pipeline.
+        // UVs span (0,0)-(1,1) per face so the bimodal-alpha noise texture tiles across each
+        // box, producing the "moth-eaten/dithered" particle look. Texture itself does the work;
+        // per-vertex alpha multiplies with per-texel alpha at draw time.
         int overlay = OverlayTexture.NO_OVERLAY;
         // Back face (-Z)
-        addVertex(vc, matrix, x2, y1, z1, red, green, blue, alpha, overlay, light, 0, 0, -1);
-        addVertex(vc, matrix, x1, y1, z1, red, green, blue, alpha, overlay, light, 0, 0, -1);
-        addVertex(vc, matrix, x1, y2, z1, red, green, blue, alpha, overlay, light, 0, 0, -1);
-        addVertex(vc, matrix, x2, y2, z1, red, green, blue, alpha, overlay, light, 0, 0, -1);
+        addVertex(vc, matrix, x2, y1, z1, 0, 1, red, green, blue, alpha, overlay, light, 0, 0, -1);
+        addVertex(vc, matrix, x1, y1, z1, 1, 1, red, green, blue, alpha, overlay, light, 0, 0, -1);
+        addVertex(vc, matrix, x1, y2, z1, 1, 0, red, green, blue, alpha, overlay, light, 0, 0, -1);
+        addVertex(vc, matrix, x2, y2, z1, 0, 0, red, green, blue, alpha, overlay, light, 0, 0, -1);
         // Left face (-X)
-        addVertex(vc, matrix, x1, y1, z1, red, green, blue, alpha, overlay, light, -1, 0, 0);
-        addVertex(vc, matrix, x1, y1, z2, red, green, blue, alpha, overlay, light, -1, 0, 0);
-        addVertex(vc, matrix, x1, y2, z2, red, green, blue, alpha, overlay, light, -1, 0, 0);
-        addVertex(vc, matrix, x1, y2, z1, red, green, blue, alpha, overlay, light, -1, 0, 0);
+        addVertex(vc, matrix, x1, y1, z1, 0, 1, red, green, blue, alpha, overlay, light, -1, 0, 0);
+        addVertex(vc, matrix, x1, y1, z2, 1, 1, red, green, blue, alpha, overlay, light, -1, 0, 0);
+        addVertex(vc, matrix, x1, y2, z2, 1, 0, red, green, blue, alpha, overlay, light, -1, 0, 0);
+        addVertex(vc, matrix, x1, y2, z1, 0, 0, red, green, blue, alpha, overlay, light, -1, 0, 0);
         // Right face (+X)
-        addVertex(vc, matrix, x2, y1, z2, red, green, blue, alpha, overlay, light, 1, 0, 0);
-        addVertex(vc, matrix, x2, y1, z1, red, green, blue, alpha, overlay, light, 1, 0, 0);
-        addVertex(vc, matrix, x2, y2, z1, red, green, blue, alpha, overlay, light, 1, 0, 0);
-        addVertex(vc, matrix, x2, y2, z2, red, green, blue, alpha, overlay, light, 1, 0, 0);
+        addVertex(vc, matrix, x2, y1, z2, 0, 1, red, green, blue, alpha, overlay, light, 1, 0, 0);
+        addVertex(vc, matrix, x2, y1, z1, 1, 1, red, green, blue, alpha, overlay, light, 1, 0, 0);
+        addVertex(vc, matrix, x2, y2, z1, 1, 0, red, green, blue, alpha, overlay, light, 1, 0, 0);
+        addVertex(vc, matrix, x2, y2, z2, 0, 0, red, green, blue, alpha, overlay, light, 1, 0, 0);
         // Top face (+Y)
-        addVertex(vc, matrix, x1, y2, z2, red, green, blue, alpha, overlay, light, 0, 1, 0);
-        addVertex(vc, matrix, x2, y2, z2, red, green, blue, alpha, overlay, light, 0, 1, 0);
-        addVertex(vc, matrix, x2, y2, z1, red, green, blue, alpha, overlay, light, 0, 1, 0);
-        addVertex(vc, matrix, x1, y2, z1, red, green, blue, alpha, overlay, light, 0, 1, 0);
+        addVertex(vc, matrix, x1, y2, z2, 0, 1, red, green, blue, alpha, overlay, light, 0, 1, 0);
+        addVertex(vc, matrix, x2, y2, z2, 1, 1, red, green, blue, alpha, overlay, light, 0, 1, 0);
+        addVertex(vc, matrix, x2, y2, z1, 1, 0, red, green, blue, alpha, overlay, light, 0, 1, 0);
+        addVertex(vc, matrix, x1, y2, z1, 0, 0, red, green, blue, alpha, overlay, light, 0, 1, 0);
         // Bottom face (-Y)
-        addVertex(vc, matrix, x1, y1, z1, red, green, blue, alpha, overlay, light, 0, -1, 0);
-        addVertex(vc, matrix, x2, y1, z1, red, green, blue, alpha, overlay, light, 0, -1, 0);
-        addVertex(vc, matrix, x2, y1, z2, red, green, blue, alpha, overlay, light, 0, -1, 0);
-        addVertex(vc, matrix, x1, y1, z2, red, green, blue, alpha, overlay, light, 0, -1, 0);
+        addVertex(vc, matrix, x1, y1, z1, 0, 1, red, green, blue, alpha, overlay, light, 0, -1, 0);
+        addVertex(vc, matrix, x2, y1, z1, 1, 1, red, green, blue, alpha, overlay, light, 0, -1, 0);
+        addVertex(vc, matrix, x2, y1, z2, 1, 0, red, green, blue, alpha, overlay, light, 0, -1, 0);
+        addVertex(vc, matrix, x1, y1, z2, 0, 0, red, green, blue, alpha, overlay, light, 0, -1, 0);
         // Front face (+Z)
-        addVertex(vc, matrix, x1, y1, z2, red, green, blue, alpha, overlay, light, 0, 0, 1);
-        addVertex(vc, matrix, x2, y1, z2, red, green, blue, alpha, overlay, light, 0, 0, 1);
-        addVertex(vc, matrix, x2, y2, z2, red, green, blue, alpha, overlay, light, 0, 0, 1);
-        addVertex(vc, matrix, x1, y2, z2, red, green, blue, alpha, overlay, light, 0, 0, 1);
+        addVertex(vc, matrix, x1, y1, z2, 0, 1, red, green, blue, alpha, overlay, light, 0, 0, 1);
+        addVertex(vc, matrix, x2, y1, z2, 1, 1, red, green, blue, alpha, overlay, light, 0, 0, 1);
+        addVertex(vc, matrix, x2, y2, z2, 1, 0, red, green, blue, alpha, overlay, light, 0, 0, 1);
+        addVertex(vc, matrix, x1, y2, z2, 0, 0, red, green, blue, alpha, overlay, light, 0, 0, 1);
     }
 
     private static void addVertex(VertexConsumer vc, Matrix4f matrix,
                                   float x, float y, float z,
+                                  float u, float v,
                                   float r, float g, float b, float a,
                                   int overlay, int light,
                                   float nx, float ny, float nz) {
         vc.addVertex(matrix, x, y, z)
             .setColor(r, g, b, a)
-            .setUv(0.5f, 0.5f)
+            .setUv(u, v)
             .setOverlay(overlay)
             .setLight(light)
             .setNormal(nx, ny, nz);

@@ -180,7 +180,7 @@ public class EnhancedMovementClient {
 
         if (DASH_KEY.consumeClick()) {
             long currentTime = System.currentTimeMillis();
-            if (currentTime - globalCooldownTime.get() <= config.movement.dash.cooldownSeconds * 1000L && globalCooldownTime.get() != 0) {
+            if (currentTime - globalCooldownTime.get() <= config.movement.dash.cooldownMs && globalCooldownTime.get() != 0) {
                 return;
             }
             String direction = detectMovementDirection(c);
@@ -291,7 +291,7 @@ public class EnhancedMovementClient {
             keyReleased.set(false);
         }
 
-        if (currentTime - globalCooldownTime.get() > config.movement.dash.cooldownSeconds * 1000L || globalCooldownTime.get() == 0) {
+        if (currentTime - globalCooldownTime.get() > config.movement.dash.cooldownMs || globalCooldownTime.get() == 0) {
             if (isPressed) {
                 if (!pressHandled.get()) {
                     if (keyReleased.get()) {
@@ -327,15 +327,15 @@ public class EnhancedMovementClient {
         float yaw = c.player.getYRot();
         float pitch = c.player.getXRot();
 
-        float dashSpeed = 1.5f;
-        float inAirDashSpeed = 1.2f;
+        float dashSpeed = 1.7f;
+        float inAirDashSpeed = 1.5f;
         float _dashSpeed;
         float _upwardLift = 0f;
         if (isInAir) {
             _dashSpeed = inAirDashSpeed;
         } else {
             _dashSpeed = dashSpeed;
-            _upwardLift = 0.2f;
+            _upwardLift = 0.4f;
         }
 
         double playerYaw = Math.toRadians(yaw);
@@ -364,6 +364,12 @@ public class EnhancedMovementClient {
         if (config.movement.dash.afterimage.enabled) {
             startDashTracking(p.getUUID(), startPos, yaw, pitch);
         }
+
+        // Piggyback on the double-jump fall-damage protection: dash-start Y as both
+        // reference heights gives the player a ~3.5-block "free fall" budget below
+        // their dash position, with scaled damage beyond that.
+        ClientNetworkHandler.sendDoubleJumpData(startPos.y, startPos.y);
+        p.fallDistance = 0.0;
 
         p.causeFoodExhaustion(0.1f);
     }

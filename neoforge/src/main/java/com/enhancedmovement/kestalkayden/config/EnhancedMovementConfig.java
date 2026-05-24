@@ -47,8 +47,8 @@ public class EnhancedMovementConfig implements ConfigData {
         public boolean enabled = true;
 
         @ConfigEntry.Gui.Tooltip(count = 2)
-        @ConfigEntry.BoundedDiscrete(min = 1, max = 5)
-        public int cooldownSeconds = 1;
+        @ConfigEntry.BoundedDiscrete(min = 100, max = 5000)
+        public int cooldownMs = 1000;
 
         @ConfigEntry.Gui.Tooltip(count = 2)
         public boolean useKeybinds = false;
@@ -66,12 +66,12 @@ public class EnhancedMovementConfig implements ConfigData {
         public boolean enabled = true;
 
         @ConfigEntry.Gui.Tooltip(count = 2)
-        @ConfigEntry.BoundedDiscrete(min = 6, max = 25)
-        public int imageCount = 16;
+        @ConfigEntry.BoundedDiscrete(min = 6, max = 30)
+        public int imageCount = 20;
 
         @ConfigEntry.Gui.Tooltip(count = 2)
-        @ConfigEntry.BoundedDiscrete(min = 30, max = 150)
-        public int baseLifetimeMs = 80;
+        @ConfigEntry.BoundedDiscrete(min = 30, max = 200)
+        public int baseLifetimeMs = 120;
 
         @ConfigEntry.Gui.Tooltip(count = 2)
         public boolean prismMode = false;
