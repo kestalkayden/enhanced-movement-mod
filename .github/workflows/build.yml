@@ -68,6 +68,7 @@ jobs:
           path: neoforge/build/libs
 
       - name: publish fabric
+        id: publish-fabric
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: enhanced-movement
@@ -76,6 +77,7 @@ jobs:
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-tag: ${{ github.ref_name }}
+          changelog-file: .github/changelogs/${{ github.ref_name }}.md
           files: |
             fabric/build/libs/!(*-@(sources|javadoc)).jar
           loaders: fabric
@@ -86,7 +88,16 @@ jobs:
           version-type: release
           java: 25
 
+      - name: patch modrinth fabric env metadata
+        if: success() && steps.publish-fabric.outputs.modrinth-version != ''
+        run: |
+          curl -fsS -X PATCH "https://api.modrinth.com/v2/version/${{ steps.publish-fabric.outputs.modrinth-version }}" \
+            -H "Authorization: ${{ secrets.MODRINTH_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"client_side":"required","server_side":"required"}'
+
       - name: publish neoforge
+        id: publish-neoforge
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: enhanced-movement
@@ -95,6 +106,7 @@ jobs:
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-tag: ${{ github.ref_name }}
+          changelog-file: .github/changelogs/${{ github.ref_name }}.md
           files: |
             neoforge/build/libs/!(*-@(sources|javadoc)).jar
           loaders: neoforge
@@ -104,3 +116,11 @@ jobs:
             26.1.2
           version-type: release
           java: 25
+
+      - name: patch modrinth neoforge env metadata
+        if: success() && steps.publish-neoforge.outputs.modrinth-version != ''
+        run: |
+          curl -fsS -X PATCH "https://api.modrinth.com/v2/version/${{ steps.publish-neoforge.outputs.modrinth-version }}" \
+            -H "Authorization: ${{ secrets.MODRINTH_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"client_side":"required","server_side":"required"}'
