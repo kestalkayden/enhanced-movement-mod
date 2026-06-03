@@ -57,6 +57,11 @@ public class EnhancedMovementClient implements ClientModInitializer {
     private Vec3 lastPlayerPosition = null;
     private long lastMovementTime = 0;
 
+    // Nudge each afterimage slightly opposite to travel so the ghost spawns just
+    // behind the player instead of at the camera's previous position, which would
+    // otherwise flash into the forward view during a first-person dash.
+    private static final double AFTERIMAGE_BACK_OFFSET = 0.65;
+
     private final AtomicLong forwardPressTime = new AtomicLong(0);
     private final AtomicLong backPressTime = new AtomicLong(0);
     private final AtomicLong leftPressTime = new AtomicLong(0);
@@ -333,7 +338,7 @@ public class EnhancedMovementClient implements ClientModInitializer {
             _dashSpeed = inAirDashSpeed;
         } else {
             _dashSpeed = dashSpeed;
-            _upwardLift = 0.4f;
+            _upwardLift = 0.2f;
         }
 
         double playerYaw = Math.toRadians(yaw);
@@ -393,6 +398,17 @@ public class EnhancedMovementClient implements ClientModInitializer {
         jumpStartTime = 0;
     }
 
+    // Shift a spawn position slightly opposite the player's horizontal velocity so
+    // the ghost lands a touch behind them. Returns the position unchanged if the
+    // player is effectively stationary.
+    private Vec3 offsetBehindTravel(Vec3 pos) {
+        if (client.player == null) return pos;
+        Vec3 vel = client.player.getDeltaMovement();
+        double len = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
+        if (len < 1.0e-3) return pos;
+        return pos.subtract((vel.x / len) * AFTERIMAGE_BACK_OFFSET, 0, (vel.z / len) * AFTERIMAGE_BACK_OFFSET);
+    }
+
     private void startDashTracking(UUID playerId, Vec3 startPos, float yaw, float pitch) {
         isDashTracking = true;
         dashTrackingStartTime = System.currentTimeMillis();
@@ -405,7 +421,7 @@ public class EnhancedMovementClient implements ClientModInitializer {
         lastMovementTime = System.currentTimeMillis();
 
         EnhancedMovementConfig config = EnhancedMovement.CONFIG;
-        AfterimageManager.addSingleAfterimage(playerId, startPos, yaw, pitch,
+        AfterimageManager.addSingleAfterimage(playerId, offsetBehindTravel(startPos), yaw, pitch,
             config.movement.dash.afterimage.baseLifetimeMs, 50L, config.movement.dash.afterimage.prismMode);
         afterimagesSpawned++;
     }
@@ -440,10 +456,11 @@ public class EnhancedMovementClient implements ClientModInitializer {
 
             double distanceFromStart = currentPos.distanceTo(dashStartPosition);
             if (distanceFromStart > 0.2) {
-                Vec3 fakeEndPos = currentPos.add(0, 0, 0);
+                Vec3 spawnPos = offsetBehindTravel(currentPos);
+                Vec3 fakeEndPos = spawnPos.add(0, 0, 0);
                 ClientNetworkHandler.sendAfterimageData(
                     dashingPlayerId,
-                    currentPos,
+                    spawnPos,
                     fakeEndPos,
                     dashYaw,
                     dashPitch,
@@ -453,7 +470,7 @@ public class EnhancedMovementClient implements ClientModInitializer {
                 long spawnDelay = Math.max(0, elapsedTime - 35);
                 AfterimageManager.addSingleAfterimage(
                     dashingPlayerId,
-                    currentPos,
+                    spawnPos,
                     dashYaw,
                     dashPitch,
                     config.movement.dash.afterimage.baseLifetimeMs,
