@@ -1,126 +1,261 @@
-# Build both loader subprojects on every push / PR, and auto-publish to
-# Modrinth + CurseForge whenever a v* tag is pushed.
-
 name: build
+
 on:
   push:
     branches: ['**']
     tags: ['v*']
   pull_request:
+  # Manual trigger for surgical releases: pick any subset of loaders × platforms.
+  # Use this to re-publish only the platform that was down (e.g. CurseForge outage)
+  # WITHOUT deleting/re-tagging, or to release one loader ahead of the other.
+  workflow_dispatch:
+    inputs:
+      fabric:
+        description: 'Build + publish Fabric'
+        type: boolean
+        default: true
+      neoforge:
+        description: 'Build + publish NeoForge'
+        type: boolean
+        default: true
+      modrinth:
+        description: 'Publish to Modrinth'
+        type: boolean
+        default: true
+      curseforge:
+        description: 'Publish to CurseForge'
+        type: boolean
+        default: true
+      github:
+        description: 'Create / attach GitHub Release'
+        type: boolean
+        default: true
 
 jobs:
-  build:
+  # Normalize both triggers into plain boolean outputs. Tag push / PR / branch push =
+  # everything on (publish only on a tag). workflow_dispatch = whatever the inputs say.
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      fabric: ${{ steps.s.outputs.fabric }}
+      neoforge: ${{ steps.s.outputs.neoforge }}
+      modrinth: ${{ steps.s.outputs.modrinth }}
+      curseforge: ${{ steps.s.outputs.curseforge }}
+      github: ${{ steps.s.outputs.github }}
+      release: ${{ steps.s.outputs.release }}
+      tag: ${{ steps.s.outputs.tag }}
+      changelog: ${{ steps.s.outputs.changelog }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: s
+        shell: bash
+        run: |
+          # neoforge_enabled=false (gradle.properties) holds NeoForge build/publish off while
+          # NeoForged hasn't shipped this MC version. Flip it to true once a build lands.
+          nf=$(grep -E '^neoforge_enabled=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')
+          [ "$nf" = "false" ] && NFE=false || NFE=true
+          ver=$(grep -E '^mod_version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')
+          mc=$(grep -E '^minecraft_version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')
+          TAG="v${ver}+mc${mc}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            F=${{ inputs.fabric }}; N=${{ inputs.neoforge }}
+            MR=${{ inputs.modrinth }}; CF=${{ inputs.curseforge }}; GH=${{ inputs.github }}
+            REL=true
+          else
+            F=true; N=true; MR=true; CF=true; GH=true
+            REL=${{ startsWith(github.ref, 'refs/tags/v') }}
+          fi
+          [ "$NFE" = false ] && N=false
+          {
+            echo "fabric=$F"
+            echo "neoforge=$N"
+            echo "modrinth=$MR"
+            echo "curseforge=$CF"
+            echo "github=$GH"
+            echo "release=$REL"
+            echo "tag=$TAG"
+            echo "changelog=.github/changelogs/${TAG}.md"
+          } >> "$GITHUB_OUTPUT"
+
+  build-fabric:
+    needs: plan
+    if: needs.plan.outputs.fabric == 'true'
     runs-on: ubuntu-24.04
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v4
-
-      - name: setup jdk 25
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
         with:
           java-version: '25'
           distribution: 'temurin'
-
-      - name: validate gradle wrapper
-        uses: gradle/actions/wrapper-validation@v4
-
-      - name: make gradle wrapper executable
-        run: chmod +x ./gradlew
-
-      - name: build all loaders
-        run: ./gradlew buildAll --stacktrace
-
-      - name: upload fabric jar
-        uses: actions/upload-artifact@v4
+      - uses: gradle/actions/wrapper-validation@v6
+      - run: chmod +x ./gradlew
+      - run: ./gradlew :fabric:build --stacktrace
+      - uses: actions/upload-artifact@v7
         with:
           name: fabric-jars
           path: fabric/build/libs/*.jar
           if-no-files-found: error
 
-      - name: upload neoforge jar
-        uses: actions/upload-artifact@v4
+  build-neoforge:
+    needs: plan
+    if: needs.plan.outputs.neoforge == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      - uses: gradle/actions/wrapper-validation@v6
+      - run: chmod +x ./gradlew
+      - run: ./gradlew :neoforge:build --stacktrace
+      - uses: actions/upload-artifact@v7
         with:
           name: neoforge-jars
           path: neoforge/build/libs/*.jar
           if-no-files-found: error
 
-  publish:
-    name: publish to Modrinth and CurseForge
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+  publish-modrinth:
+    needs: [plan, build-fabric, build-neoforge]
+    if: ${{ !cancelled() && needs.plan.outputs.release == 'true' && needs.plan.outputs.modrinth == 'true' && needs.build-fabric.result != 'failure' && needs.build-neoforge.result != 'failure' }}
     runs-on: ubuntu-24.04
-    permissions:
-      contents: write
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v4
-
-      - name: download fabric jars
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        if: needs.plan.outputs.fabric == 'true'
         with:
           name: fabric-jars
           path: fabric/build/libs
-
-      - name: download neoforge jars
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
+        if: needs.plan.outputs.neoforge == 'true'
         with:
           name: neoforge-jars
           path: neoforge/build/libs
-
-      - name: publish fabric
-        id: publish-fabric
-        uses: Kir-Antipov/mc-publish@v3.3
+      - name: modrinth fabric
+        id: mr-fabric
+        if: needs.plan.outputs.fabric == 'true'
+        uses: Kira-NT/mc-publish@v3.3
         with:
           modrinth-id: enhanced-movement
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-          curseforge-id: 843764
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-tag: ${{ github.ref_name }}
-          changelog-file: .github/changelogs/${{ github.ref_name }}.md
-          files: |
-            fabric/build/libs/!(*-@(sources|javadoc)).jar
+          changelog-file: ${{ needs.plan.outputs.changelog }}
+          files: fabric/build/libs/!(*-@(sources|javadoc)).jar
           loaders: fabric
           game-versions: |
             26.1
             26.1.1
             26.1.2
           version-type: release
+          game-version-filter: none
           java: 25
-
       - name: patch modrinth fabric env metadata
-        if: success() && steps.publish-fabric.outputs.modrinth-version != ''
+        if: ${{ needs.plan.outputs.fabric == 'true' && steps.mr-fabric.outputs.modrinth-version != '' }}
         run: |
-          curl -fsS -X PATCH "https://api.modrinth.com/v2/version/${{ steps.publish-fabric.outputs.modrinth-version }}" \
+          curl -fsS -X PATCH "https://api.modrinth.com/v2/version/${{ steps.mr-fabric.outputs.modrinth-version }}" \
             -H "Authorization: ${{ secrets.MODRINTH_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d '{"client_side":"required","server_side":"required"}'
-
-      - name: publish neoforge
-        id: publish-neoforge
-        uses: Kir-Antipov/mc-publish@v3.3
+      - name: modrinth neoforge
+        id: mr-neoforge
+        if: needs.plan.outputs.neoforge == 'true'
+        uses: Kira-NT/mc-publish@v3.3
         with:
           modrinth-id: enhanced-movement
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-          curseforge-id: 843764
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-tag: ${{ github.ref_name }}
-          changelog-file: .github/changelogs/${{ github.ref_name }}.md
-          files: |
-            neoforge/build/libs/!(*-@(sources|javadoc)).jar
+          changelog-file: ${{ needs.plan.outputs.changelog }}
+          files: neoforge/build/libs/!(*-@(sources|javadoc)).jar
           loaders: neoforge
           game-versions: |
             26.1
             26.1.1
             26.1.2
           version-type: release
+          game-version-filter: none
           java: 25
-
       - name: patch modrinth neoforge env metadata
-        if: success() && steps.publish-neoforge.outputs.modrinth-version != ''
+        if: ${{ needs.plan.outputs.neoforge == 'true' && steps.mr-neoforge.outputs.modrinth-version != '' }}
         run: |
-          curl -fsS -X PATCH "https://api.modrinth.com/v2/version/${{ steps.publish-neoforge.outputs.modrinth-version }}" \
+          curl -fsS -X PATCH "https://api.modrinth.com/v2/version/${{ steps.mr-neoforge.outputs.modrinth-version }}" \
             -H "Authorization: ${{ secrets.MODRINTH_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d '{"client_side":"required","server_side":"required"}'
+
+  publish-curseforge:
+    needs: [plan, build-fabric, build-neoforge]
+    if: ${{ !cancelled() && needs.plan.outputs.release == 'true' && needs.plan.outputs.curseforge == 'true' && needs.build-fabric.result != 'failure' && needs.build-neoforge.result != 'failure' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        if: needs.plan.outputs.fabric == 'true'
+        with:
+          name: fabric-jars
+          path: fabric/build/libs
+      - uses: actions/download-artifact@v8
+        if: needs.plan.outputs.neoforge == 'true'
+        with:
+          name: neoforge-jars
+          path: neoforge/build/libs
+      - name: curseforge fabric
+        if: needs.plan.outputs.fabric == 'true'
+        uses: Kira-NT/mc-publish@v3.3
+        with:
+          curseforge-id: 843764
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          changelog-file: ${{ needs.plan.outputs.changelog }}
+          files: fabric/build/libs/!(*-@(sources|javadoc)).jar
+          loaders: fabric
+          game-versions: |
+            26.1
+            26.1.1
+            26.1.2
+          version-type: release
+          game-version-filter: none
+          java: 25
+      - name: curseforge neoforge
+        if: needs.plan.outputs.neoforge == 'true'
+        uses: Kira-NT/mc-publish@v3.3
+        with:
+          curseforge-id: 843764
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          changelog-file: ${{ needs.plan.outputs.changelog }}
+          files: neoforge/build/libs/!(*-@(sources|javadoc)).jar
+          loaders: neoforge
+          game-versions: |
+            26.1
+            26.1.1
+            26.1.2
+          version-type: release
+          game-version-filter: none
+          java: 25
+
+  # GitHub Release is per-version (one release, both loader jars attached) — not per-loader.
+  publish-github:
+    needs: [plan, build-fabric, build-neoforge]
+    if: ${{ !cancelled() && needs.plan.outputs.release == 'true' && needs.plan.outputs.github == 'true' && needs.build-fabric.result != 'failure' && needs.build-neoforge.result != 'failure' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        if: needs.plan.outputs.fabric == 'true'
+        with:
+          name: fabric-jars
+          path: fabric/build/libs
+      - uses: actions/download-artifact@v8
+        if: needs.plan.outputs.neoforge == 'true'
+        with:
+          name: neoforge-jars
+          path: neoforge/build/libs
+      - name: github release
+        uses: Kira-NT/mc-publish@v3.3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ needs.plan.outputs.tag }}
+          changelog-file: ${{ needs.plan.outputs.changelog }}
+          files: |
+            fabric/build/libs/!(*-@(sources|javadoc)).jar
+            neoforge/build/libs/!(*-@(sources|javadoc)).jar
+          version-type: release
+          java: 25
