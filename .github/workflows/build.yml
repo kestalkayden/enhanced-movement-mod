@@ -142,10 +142,8 @@ jobs:
           files: fabric/build/libs/!(*-@(sources|javadoc)).jar
           loaders: fabric
           game-versions: |
-            26.1
-            26.1.1
-            26.1.2
-          version-type: release
+            26.2-rc-2
+          version-type: beta
           game-version-filter: none
           java: 25
       - name: patch modrinth fabric env metadata
@@ -166,10 +164,8 @@ jobs:
           files: neoforge/build/libs/!(*-@(sources|javadoc)).jar
           loaders: neoforge
           game-versions: |
-            26.1
-            26.1.1
-            26.1.2
-          version-type: release
+            26.2-rc-2
+          version-type: beta
           game-version-filter: none
           java: 25
       - name: patch modrinth neoforge env metadata
@@ -206,10 +202,8 @@ jobs:
           files: fabric/build/libs/!(*-@(sources|javadoc)).jar
           loaders: fabric
           game-versions: |
-            26.1
-            26.1.1
-            26.1.2
-          version-type: release
+            26.2-rc-2
+          version-type: beta
           game-version-filter: none
           java: 25
       - name: curseforge neoforge
@@ -222,10 +216,8 @@ jobs:
           files: neoforge/build/libs/!(*-@(sources|javadoc)).jar
           loaders: neoforge
           game-versions: |
-            26.1
-            26.1.1
-            26.1.2
-          version-type: release
+            26.2-rc-2
+          version-type: beta
           game-version-filter: none
           java: 25
 
@@ -257,5 +249,5 @@ jobs:
           files: |
             fabric/build/libs/!(*-@(sources|javadoc)).jar
             neoforge/build/libs/!(*-@(sources|javadoc)).jar
-          version-type: release
+          version-type: beta
           java: 25

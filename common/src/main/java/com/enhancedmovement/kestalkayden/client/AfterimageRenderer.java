@@ -3,8 +3,7 @@ package com.enhancedmovement.kestalkayden.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
@@ -27,13 +26,13 @@ public class AfterimageRenderer {
 
     public static void renderAfterimage(
         PoseStack matrices,
-        MultiBufferSource vertexConsumers,
+        SubmitNodeCollector collector,
         AfterimageManager.AfterimageData afterimage,
         int light
     ) {
         matrices.pushPose();
 
-        Vec3 cameraPos = client.gameRenderer.getMainCamera().position();
+        Vec3 cameraPos = client.gameRenderer.mainCamera().position();
         Vec3 offsetPos = afterimage.position;
 
         Vec3 cameraToAfterimage = offsetPos.subtract(cameraPos);
@@ -49,31 +48,28 @@ public class AfterimageRenderer {
         );
 
         float opacity = afterimage.getOpacity();
-        renderPlayerSilhouette(matrices, vertexConsumers, opacity, light, afterimage);
+        renderPlayerSilhouette(matrices, collector, opacity, light, afterimage);
 
         matrices.popPose();
     }
 
-    private static void renderPlayerSilhouette(PoseStack matrices, MultiBufferSource vertexConsumers, float opacity, int light, AfterimageManager.AfterimageData afterimage) {
-        Matrix4f matrix = matrices.last().pose();
-        RenderType renderType = RenderTypes.entityTranslucentEmissive(WHITE_TEXTURE);
-        VertexConsumer vertexConsumer = vertexConsumers.getBuffer(renderType);
+    private static void renderPlayerSilhouette(PoseStack matrices, SubmitNodeCollector collector, float opacity, int light, AfterimageManager.AfterimageData afterimage) {
+        // MC 26.2 render overhaul: instead of pulling a VertexConsumer from a buffer source, submit
+        // the silhouette geometry through the SubmitNodeCollector. submitCustomGeometry snapshots the
+        // current pose and hands the callback a Pose + VertexConsumer for the requested RenderType.
+        float[] rgb = resolveColor(afterimage);
+        collector.submitCustomGeometry(matrices, RenderTypes.entityTranslucentEmissive(WHITE_TEXTURE),
+            (pose, vc) -> renderPlayerSilhouetteParts(pose.pose(), vc, rgb[0], rgb[1], rgb[2], opacity, light, afterimage));
+    }
 
-        float red, green, blue;
+    private static float[] resolveColor(AfterimageManager.AfterimageData afterimage) {
         if (afterimage.hasOverrideColor) {
-            red = afterimage.overrideRed;
-            green = afterimage.overrideGreen;
-            blue = afterimage.overrideBlue;
-        } else if (afterimage.prismMode) {
-            float[] prism = getPrismColors(afterimage);
-            red = prism[0]; green = prism[1]; blue = prism[2];
-        } else {
-            red = afterimage.baseRed;
-            green = afterimage.baseGreen;
-            blue = afterimage.baseBlue;
+            return new float[]{afterimage.overrideRed, afterimage.overrideGreen, afterimage.overrideBlue};
         }
-
-        renderPlayerSilhouetteParts(matrix, vertexConsumer, red, green, blue, opacity, light, afterimage);
+        if (afterimage.prismMode) {
+            return getPrismColors(afterimage);
+        }
+        return new float[]{afterimage.baseRed, afterimage.baseGreen, afterimage.baseBlue};
     }
 
     private static float[] getPrismColors(AfterimageManager.AfterimageData afterimage) {

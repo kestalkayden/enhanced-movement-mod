@@ -36,6 +36,11 @@ loom {
     }
 }
 
+// Pull the shared :common afterimage sources into the CLIENT source set — they use client-only
+// Minecraft classes, and Fabric's splitEnvironmentSourceSets() keeps client code out of main.
+// The standalone :common module compiles them against vanilla NeoForm as a purity check.
+sourceSets.client.java.srcDir "${rootProject.projectDir}/common/src/main/java"
+
 processResources {
     inputs.property "version", project.version
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

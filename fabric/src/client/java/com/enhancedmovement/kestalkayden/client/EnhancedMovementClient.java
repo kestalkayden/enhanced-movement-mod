@@ -117,16 +117,16 @@ public class EnhancedMovementClient implements ClientModInitializer {
             if (!config.movement.dash.afterimage.enabled) return;
 
             var matrices = context.poseStack();
-            var vertexConsumers = context.bufferSource();
+            var collector = context.submitNodeCollector();
             int light = 15728880;
 
             for (AfterimageManager.AfterimageData afterimage : AfterimageManager.getActiveAfterimages()) {
                 if (afterimage.getOpacity() > 0.0f) {
-                    Vec3 cameraPos = client.gameRenderer.getMainCamera().position();
+                    Vec3 cameraPos = client.gameRenderer.mainCamera().position();
                     double distanceToCamera = afterimage.position.distanceTo(cameraPos);
                     boolean isFirstPerson = client.options.getCameraType().isFirstPerson();
                     if (!isFirstPerson || distanceToCamera > 1.5) {
-                        AfterimageRenderer.renderAfterimage(matrices, vertexConsumers, afterimage, light);
+                        AfterimageRenderer.renderAfterimage(matrices, collector, afterimage, light);
                     }
                 }
             }
@@ -179,7 +179,7 @@ public class EnhancedMovementClient implements ClientModInitializer {
 
     private void handleKeybindDash(EnhancedMovementConfig config) {
         if (client.player == null) return;
-        if (client.screen != null) return;
+        if (client.gui.screen() != null) return;
 
         if (dashKey.consumeClick()) {
             long currentTime = System.currentTimeMillis();
@@ -271,7 +271,7 @@ public class EnhancedMovementClient implements ClientModInitializer {
     private void handleDash(KeyMapping key, boolean isPressed, AtomicLong pressTime, AtomicLong cooldownTime,
                             AtomicBoolean keyReleased, AtomicBoolean pressHandled,
                             EnhancedMovementConfig config) {
-        if (client.screen != null) return;
+        if (client.gui.screen() != null) return;
 
         long currentTime = System.currentTimeMillis();
 

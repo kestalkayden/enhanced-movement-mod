@@ -14,3 +14,4 @@ rootProject.name = 'enhanced-movement-multiloader'
 
 include 'fabric'
 include 'neoforge'
+include 'common'

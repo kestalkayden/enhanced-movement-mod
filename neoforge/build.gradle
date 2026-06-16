@@ -5,6 +5,11 @@ plugins {
 
 base.archivesName = "${project.archives_base_name}-neoforge"
 
+// Compile the shared :common afterimage sources into this jar against NeoForge's Minecraft view.
+// The standalone :common module additionally compiles them against vanilla NeoForm as a
+// platform-agnostic purity check.
+sourceSets.main.java.srcDir "${rootProject.projectDir}/common/src/main/java"
+
 neoForge {
     version = neoforge_version
     validateAccessTransformers = false
