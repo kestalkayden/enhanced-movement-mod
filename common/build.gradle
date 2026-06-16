@@ -13,7 +13,7 @@ neoForge {
     // platform-agnostic purity check that fails the build if the shared code imports a Fabric/
     // NeoForge class. The real jars come from :fabric (which pulls these into its CLIENT source
     // set, since they use client-only classes) and :neoforge (main), via sourceSets srcDir.
-    neoFormVersion = "26.2-rc-2-1"
+    neoFormVersion = "26.2-1"
     validateAccessTransformers = false
 }
 

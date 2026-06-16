@@ -13,7 +13,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -136,22 +136,22 @@ public class EnhancedMovementClient {
     }
 
     @SubscribeEvent
-    public static void onRenderLevelStage(RenderLevelStageEvent.AfterTranslucentFeatures event) {
+    public static void onSubmitCustomGeometry(SubmitCustomGeometryEvent event) {
         EnhancedMovementConfig config = EnhancedMovement.CONFIG;
         if (!config.movement.dash.afterimage.enabled) return;
 
         Minecraft c = Minecraft.getInstance();
         var matrices = event.getPoseStack();
-        var bufferSource = c.renderBuffers().bufferSource();
+        var collector = event.getSubmitNodeCollector();
         int light = 15728880;
 
         for (AfterimageManager.AfterimageData afterimage : AfterimageManager.getActiveAfterimages()) {
             if (afterimage.getOpacity() > 0.0f) {
-                Vec3 cameraPos = c.gameRenderer.getMainCamera().position();
+                Vec3 cameraPos = c.gameRenderer.mainCamera().position();
                 double distanceToCamera = afterimage.position.distanceTo(cameraPos);
                 boolean isFirstPerson = c.options.getCameraType().isFirstPerson();
                 if (!isFirstPerson || distanceToCamera > 1.5) {
-                    AfterimageRenderer.renderAfterimage(matrices, bufferSource, afterimage, light);
+                    AfterimageRenderer.renderAfterimage(matrices, collector, afterimage, light);
                 }
             }
         }
@@ -176,7 +176,7 @@ public class EnhancedMovementClient {
 
     private void handleKeybindDash(Minecraft c, EnhancedMovementConfig config) {
         if (c.player == null) return;
-        if (c.screen != null) return;
+        if (c.gui.screen() != null) return;
 
         if (DASH_KEY.consumeClick()) {
             long currentTime = System.currentTimeMillis();
@@ -268,7 +268,7 @@ public class EnhancedMovementClient {
     private void handleDash(Minecraft c, KeyMapping key, boolean isPressed, AtomicLong pressTime, AtomicLong cooldownTime,
                             AtomicBoolean keyReleased, AtomicBoolean pressHandled,
                             EnhancedMovementConfig config) {
-        if (c.screen != null) return;
+        if (c.gui.screen() != null) return;
 
         long currentTime = System.currentTimeMillis();
 
