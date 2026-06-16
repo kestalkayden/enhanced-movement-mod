@@ -86,7 +86,7 @@ public class NetworkHandler {
     }
 
     @SubscribeEvent
-    public static void onServerTick(ServerTickEvent.Pre event) {
+    public static void onServerTick(ServerTickEvent.Post event) {
         MinecraftServer server = event.getServer();
         if (!playerJumpData.isEmpty()) {
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
