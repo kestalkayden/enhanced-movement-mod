@@ -4,7 +4,7 @@
 
 # Enhanced Movement
 
-A small Minecraft mod that adds **double jump**, **directional dash**, **ledge grab**, and **dash afterimages** — built for **Minecraft 26.1.x** on both **Fabric** and **NeoForge**.
+A small Minecraft mod that adds **double jump**, **directional dash**, **ledge grab**, and **dash afterimages** — built for **Minecraft 26.2** on both **Fabric** and **NeoForge**.
 
 ## Downloads
 
@@ -12,7 +12,7 @@ A small Minecraft mod that adds **double jump**, **directional dash**, **ledge g
 - **[CurseForge](https://www.curseforge.com/minecraft/mc-mods/enhanced-movement-fabric)**
 - **[GitHub Releases](https://github.com/kestalkayden/enhanced-movement-mod/releases)** — backup direct downloads
 
-A single jar per loader covers Minecraft **26.1**, **26.1.1**, and **26.1.2**.
+A single jar per loader targets Minecraft **26.2**.
 
 > ⚠️ Always back up your world before installing new mods. Enhanced Movement is small and doesn't touch world data, but this is good practice in general.
 
@@ -27,15 +27,15 @@ A single jar per loader covers Minecraft **26.1**, **26.1.1**, and **26.1.2**.
 
 ## Requirements
 
-- **Minecraft 26.1, 26.1.1, or 26.1.2**
+- **Minecraft 26.2**
 - **Java 25**
-- **Fabric build:** [Fabric Loader 0.18.4+](https://fabricmc.net/use/), [Fabric API 0.149.0+26.1.2+](https://modrinth.com/mod/fabric-api), [Cloth Config 26.1.154](https://modrinth.com/mod/cloth-config), optional [Mod Menu](https://modrinth.com/mod/modmenu)
-- **NeoForge build:** [NeoForge 26.1+](https://neoforged.net/), [Cloth Config 26.1.154](https://modrinth.com/mod/cloth-config)
+- **Fabric build:** [Fabric Loader 0.18.4+](https://fabricmc.net/use/), [Fabric API 0.152.1+26.2](https://modrinth.com/mod/fabric-api), optional [Mod Menu](https://modrinth.com/mod/modmenu) for the in-game config screen
+- **NeoForge build:** [NeoForge 26.2.0.0-beta+](https://neoforged.net/) — no extra dependencies
 
 ## Quick start
 
-1. Install Fabric Loader or NeoForge for Minecraft 26.1.x.
-2. Drop the Enhanced Movement jar plus the dependencies above into your `mods/` folder.
+1. Install Fabric Loader or NeoForge for Minecraft 26.2.
+2. Drop the Enhanced Movement jar into your `mods/` folder (Fabric also needs Fabric API; Mod Menu is optional).
 3. Launch the game. Double-tap a movement key to dash; double-press jump for a mid-air boost.
 4. To use the dedicated dash keybind: open **Mod Menu → Enhanced Movement → Config**, toggle **`useKeybinds`** to **ON**, then bind a key in **Options → Controls**.
 

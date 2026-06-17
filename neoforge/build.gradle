@@ -33,10 +33,6 @@ neoForge {
     }
 }
 
-dependencies {
-    implementation "me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}"
-}
-
 processResources {
     inputs.property "version", project.version
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

@@ -1,10 +1,8 @@
 package com.enhancedmovement.kestalkayden;
 
 import com.enhancedmovement.kestalkayden.client.EnhancedMovementClient;
+import com.enhancedmovement.kestalkayden.client.EnhancedMovementConfigScreen;
 import com.enhancedmovement.kestalkayden.config.EnhancedMovementConfig;
-import me.shedaniel.autoconfig.AutoConfig;
-import me.shedaniel.autoconfig.AutoConfigClient;
-import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -23,14 +21,13 @@ public class EnhancedMovement {
     public static EnhancedMovementConfig CONFIG;
 
     public EnhancedMovement(ModContainer container, IEventBus modBus) {
-        AutoConfig.register(EnhancedMovementConfig.class, GsonConfigSerializer::new);
-        CONFIG = AutoConfig.getConfigHolder(EnhancedMovementConfig.class).getConfig();
+        CONFIG = EnhancedMovementConfig.load();
 
         modBus.addListener(NetworkHandler::onRegisterPayloadHandlers);
 
         if (FMLEnvironment.getDist() == Dist.CLIENT) {
             container.registerExtensionPoint(IConfigScreenFactory.class,
-                (mod, parent) -> AutoConfigClient.getConfigScreen(EnhancedMovementConfig.class, parent).get());
+                (mod, parent) -> new EnhancedMovementConfigScreen(parent));
             EnhancedMovementClient.register(modBus);
         }
 

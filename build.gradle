@@ -16,7 +16,6 @@ subprojects {
     repositories {
         maven { name = 'Fabric'; url = 'https://maven.fabricmc.net/' }
         maven { name = 'NeoForged'; url = 'https://maven.neoforged.net/releases' }
-        maven { name = 'Shedaniel'; url = 'https://maven.shedaniel.me/' }
         maven { name = 'TerraformersMC'; url = 'https://maven.terraformersmc.com/' }
         mavenCentral()
     }
