@@ -11,9 +11,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -83,10 +85,18 @@ public class EnhancedMovementClient {
     private final AtomicBoolean leftPressHandled = new AtomicBoolean(false);
     private final AtomicBoolean rightPressHandled = new AtomicBoolean(false);
 
-    public static void register(IEventBus modBus) {
+    public static void register(IEventBus modBus, ModContainer container) {
         LOGGER.info("Enhanced Movement client registering.");
         modBus.addListener(EnhancedMovementClient::onRegisterKeyMappings);
         NeoForge.EVENT_BUS.register(EnhancedMovementClient.class);
+
+        // Config button on the Mods screen. Registered here rather than on the @Mod class so the
+        // dedicated server never verifies the Screen-referencing lambda: the JVM verifies every
+        // method of a class at link time, and @Mod is linked during constructMods, which would
+        // force-load vanilla client classes the server strips. This class is only reached via a
+        // guarded invokestatic, so the server never loads it.
+        container.registerExtensionPoint(IConfigScreenFactory.class,
+            (mod, parent) -> new EnhancedMovementConfigScreen(parent));
 
         NetworkHandler.clientAfterimageReceiver = payload -> {
             EnhancedMovementConfig config = EnhancedMovement.CONFIG;
