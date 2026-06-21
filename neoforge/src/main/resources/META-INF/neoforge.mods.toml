@@ -7,7 +7,7 @@ modId="enhancedmovement"
 version="${version}"
 displayName="Enhanced Movement"
 description='''
-Double jump, dash in any direction, ledge grab, and afterimages — built for Minecraft 1.21.4.
+Double jump, dash in any direction, ledge grab, and afterimages — built for Minecraft 1.21.8.
 '''
 authors="Kestalkayden"
 displayURL="https://github.com/kestalkayden/enhanced-movement-mod"
@@ -16,13 +16,13 @@ logoFile="icon.png"
 [[dependencies.enhancedmovement]]
 modId="neoforge"
 type="required"
-versionRange="[21.4.157,)"
+versionRange="[21.8.53,)"
 ordering="NONE"
 side="BOTH"
 
 [[dependencies.enhancedmovement]]
 modId="minecraft"
 type="required"
-versionRange="[1.21.4,1.21.5)"
+versionRange="[1.21.8,1.21.9)"
 ordering="NONE"
 side="BOTH"

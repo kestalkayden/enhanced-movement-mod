@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import me.shedaniel.autoconfig.AutoConfig;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -92,7 +91,7 @@ public class EnhancedMovementClient {
         // force-load vanilla client classes the server strips. This class is only reached via a
         // guarded invokestatic, so the server never loads it.
         container.registerExtensionPoint(IConfigScreenFactory.class,
-            (mod, parent) -> AutoConfig.getConfigScreen(EnhancedMovementConfig.class, parent).get());
+            (mod, parent) -> new EnhancedMovementConfigScreen(parent));
 
         NetworkHandler.clientAfterimageReceiver = payload -> {
             EnhancedMovementConfig config = EnhancedMovement.CONFIG;
@@ -142,9 +141,7 @@ public class EnhancedMovementClient {
     }
 
     @SubscribeEvent
-    public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
-
+    public static void onRenderLevelStage(RenderLevelStageEvent.AfterTranslucentBlocks event) {
         EnhancedMovementConfig config = EnhancedMovement.CONFIG;
         if (!config.movement.dash.afterimage.enabled) return;
 

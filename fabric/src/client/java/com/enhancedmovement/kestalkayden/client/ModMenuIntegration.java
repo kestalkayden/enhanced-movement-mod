@@ -1,14 +1,18 @@
 package com.enhancedmovement.kestalkayden.client;
 
-import com.enhancedmovement.kestalkayden.config.EnhancedMovementConfig;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
-import me.shedaniel.autoconfig.AutoConfig;
 
+/**
+ * ModMenu integration — supplies the "Config" button on the Fabric mod list screen.
+ *
+ * <p>Client-only (references {@link EnhancedMovementConfigScreen}, which imports {@code Screen}),
+ * registered under the {@code "modmenu"} entrypoint in {@code fabric.mod.json}.
+ */
 public class ModMenuIntegration implements ModMenuApi {
 
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        return parent -> AutoConfig.getConfigScreen(EnhancedMovementConfig.class, parent).get();
+        return parent -> new EnhancedMovementConfigScreen(parent);
     }
 }

@@ -1,8 +1,6 @@
 package com.enhancedmovement.kestalkayden;
 
 import com.enhancedmovement.kestalkayden.config.EnhancedMovementConfig;
-import me.shedaniel.autoconfig.AutoConfig;
-import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,8 +17,7 @@ public class EnhancedMovement implements ModInitializer {
     public void onInitialize() {
         instance = this;
 
-        AutoConfig.register(EnhancedMovementConfig.class, GsonConfigSerializer::new);
-        CONFIG = AutoConfig.getConfigHolder(EnhancedMovementConfig.class).getConfig();
+        CONFIG = EnhancedMovementConfig.load();
 
         NetworkHandler.initialize();
 

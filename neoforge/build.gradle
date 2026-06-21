@@ -29,7 +29,6 @@ neoForge {
 }
 
 dependencies {
-    implementation "me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}"
 }
 
 processResources {

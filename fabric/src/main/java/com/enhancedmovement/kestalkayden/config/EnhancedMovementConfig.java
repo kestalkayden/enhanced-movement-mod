@@ -1,85 +1,153 @@
 package com.enhancedmovement.kestalkayden.config;
 
-import me.shedaniel.autoconfig.ConfigData;
-import me.shedaniel.autoconfig.annotation.Config;
-import me.shedaniel.autoconfig.annotation.ConfigEntry;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import net.fabricmc.loader.api.FabricLoader;
 
-@Config(name = "enhancedmovement")
-public class EnhancedMovementConfig implements ConfigData {
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-    @ConfigEntry.Category("movement")
-    @ConfigEntry.Gui.TransitiveObject
+/**
+ * Gson-backed config for Enhanced Movement (Fabric).
+ *
+ * <p>Replaces the former Cloth AutoConfig POJO. On NeoForge 1.21.8, Cloth Config's {@code @OnlyIn}
+ * usage trips the loader's "member-stripping no longer present" warning gate, blocking entry.
+ * Storage is now plain Gson at {@code config/enhancedmovement.json} — the SAME path and nested field
+ * shape Cloth's {@code GsonConfigSerializer} used, so existing user configs carry over unchanged.
+ * The in-game screen is the hand-built
+ * {@link com.enhancedmovement.kestalkayden.client.EnhancedMovementConfigScreen}.
+ *
+ * <p>This is the Fabric copy; NeoForge keeps a byte-identical copy that differs only in the
+ * config-directory lookup (the one loader-specific line below).
+ */
+public class EnhancedMovementConfig {
+
     public MovementConfig movement = new MovementConfig();
 
     public static class MovementConfig {
-
-        @ConfigEntry.Gui.CollapsibleObject(startExpanded = true)
         public DoubleJumpConfig doubleJump = new DoubleJumpConfig();
-
-        @ConfigEntry.Gui.CollapsibleObject(startExpanded = true)
         public DashConfig dash = new DashConfig();
-
-        @ConfigEntry.Gui.CollapsibleObject(startExpanded = true)
         public GeneralConfig general = new GeneralConfig();
     }
 
     public static class DoubleJumpConfig {
-
-        @ConfigEntry.Gui.Tooltip(count = 1)
-        @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
         public boolean enabled = true;
-
-        @ConfigEntry.Gui.Tooltip(count = 2)
-        @ConfigEntry.BoundedDiscrete(min = 20, max = 60)
+        /** Strength of the double-jump boost, percent. Range: 20-60. */
         public int jumpBoostPercent = 40;
-
-        @ConfigEntry.Gui.Tooltip(count = 2)
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 500)
+        /** Delay after the initial jump before a double jump is allowed, ms. Range: 100-500. */
         public int delayBeforeDoubleJumpMs = 250;
-
-        @ConfigEntry.Gui.Tooltip(count = 2)
         public boolean enableLedgeGrab = true;
     }
 
     public static class DashConfig {
-
-        @ConfigEntry.Gui.Tooltip(count = 1)
         public boolean enabled = true;
-
-        @ConfigEntry.Gui.Tooltip(count = 2)
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 5000)
+        /** Time between dashes, ms. Range: 100-5000. */
         public int cooldownMs = 1000;
-
-        @ConfigEntry.Gui.Tooltip(count = 2)
         public boolean useKeybinds = false;
-
-        @ConfigEntry.Gui.Tooltip(count = 1)
         public boolean enableAirDash = true;
-
-        @ConfigEntry.Gui.CollapsibleObject
         public AfterimageConfig afterimage = new AfterimageConfig();
     }
 
     public static class AfterimageConfig {
-
-        @ConfigEntry.Gui.Tooltip(count = 2)
         public boolean enabled = true;
-
-        @ConfigEntry.Gui.Tooltip(count = 2)
-        @ConfigEntry.BoundedDiscrete(min = 6, max = 30)
+        /** Number of afterimages along the dash path. Range: 6-30. */
         public int imageCount = 20;
-
-        @ConfigEntry.Gui.Tooltip(count = 2)
-        @ConfigEntry.BoundedDiscrete(min = 30, max = 200)
+        /** Base fade time, in tens of milliseconds. Range: 30-200. */
         public int baseLifetimeMs = 120;
-
-        @ConfigEntry.Gui.Tooltip(count = 2)
         public boolean prismMode = false;
     }
 
     public static class GeneralConfig {
-
-        @ConfigEntry.Gui.Tooltip(count = 2)
         public boolean sneakDisablesFeatures = false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Persistence
+    // -------------------------------------------------------------------------
+
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    /** Loader-specific config-directory seam — the only line that differs from the NeoForge copy. */
+    private static final Path PATH =
+            FabricLoader.getInstance().getConfigDir().resolve("enhancedmovement.json");
+
+    /** The live singleton, populated by {@link #load()}. */
+    private static EnhancedMovementConfig instance;
+
+    /** The live config instance, lazily loaded. Mutate fields directly, then call {@link #save()}. */
+    public static EnhancedMovementConfig get() {
+        if (instance == null) {
+            load();
+        }
+        return instance;
+    }
+
+    /**
+     * Load (or create) {@code config/enhancedmovement.json}. A missing or unreadable file falls
+     * back to defaults, which are then written so the file is self-documenting on first run.
+     * Always leaves {@link #instance} non-null with all nested objects present.
+     */
+    public static EnhancedMovementConfig load() {
+        EnhancedMovementConfig cfg = new EnhancedMovementConfig();
+        if (Files.exists(PATH)) {
+            try (Reader r = Files.newBufferedReader(PATH)) {
+                EnhancedMovementConfig loaded = GSON.fromJson(r, EnhancedMovementConfig.class);
+                if (loaded != null) {
+                    cfg = loaded;
+                }
+            } catch (IOException | RuntimeException e) {
+                // Keep defaults; the broken file is overwritten by the save() below.
+            }
+        }
+        cfg.fillMissing();
+        instance = cfg;
+        clamp();
+        save();
+        return instance;
+    }
+
+    /** Clamp bounded fields to their documented ranges, then persist to disk. */
+    public static void save() {
+        if (instance == null) {
+            return;
+        }
+        clamp();
+        try {
+            Files.createDirectories(PATH.getParent());
+            try (Writer w = Files.newBufferedWriter(PATH)) {
+                GSON.toJson(instance, w);
+            }
+        } catch (IOException e) {
+            // Non-fatal: the in-memory state is already correct.
+        }
+    }
+
+    /** Replace any null nested object (e.g. a partial/old JSON file) with its default. */
+    private void fillMissing() {
+        if (movement == null) movement = new MovementConfig();
+        if (movement.doubleJump == null) movement.doubleJump = new DoubleJumpConfig();
+        if (movement.dash == null) movement.dash = new DashConfig();
+        if (movement.dash.afterimage == null) movement.dash.afterimage = new AfterimageConfig();
+        if (movement.general == null) movement.general = new GeneralConfig();
+    }
+
+    private static void clamp() {
+        DoubleJumpConfig dj = instance.movement.doubleJump;
+        dj.jumpBoostPercent = clampInt(dj.jumpBoostPercent, 20, 60);
+        dj.delayBeforeDoubleJumpMs = clampInt(dj.delayBeforeDoubleJumpMs, 100, 500);
+
+        DashConfig d = instance.movement.dash;
+        d.cooldownMs = clampInt(d.cooldownMs, 100, 5000);
+
+        AfterimageConfig a = d.afterimage;
+        a.imageCount = clampInt(a.imageCount, 6, 30);
+        a.baseLifetimeMs = clampInt(a.baseLifetimeMs, 30, 200);
+    }
+
+    private static int clampInt(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 }

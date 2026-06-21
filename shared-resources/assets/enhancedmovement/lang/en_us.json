@@ -1,62 +1,41 @@
 {
-  "text.autoconfig.enhancedmovement.title": "Enhanced Movement Config",
-  "text.autoconfig.enhancedmovement.category.movement": "Movement Settings",
-  
-  "text.autoconfig.enhancedmovement.option.movement.doubleJump": "Double Jump & Ledge Grab",
-  "text.autoconfig.enhancedmovement.option.movement.doubleJump.enabled": "Enable Double Jump",
-  "text.autoconfig.enhancedmovement.option.movement.doubleJump.enabled.@Tooltip": "Enable or disable the double jump functionality entirely",
-  
-  "text.autoconfig.enhancedmovement.option.movement.doubleJump.jumpBoostPercent": "Jump Power (%)",
-  "text.autoconfig.enhancedmovement.option.movement.doubleJump.jumpBoostPercent.@Tooltip[0]": "Strength of the double jump boost in percentage",
-  "text.autoconfig.enhancedmovement.option.movement.doubleJump.jumpBoostPercent.@Tooltip[1]": "40% = 4 blocks boost, higher values = higher double jump",
-  
-  "text.autoconfig.enhancedmovement.option.movement.doubleJump.delayBeforeDoubleJumpMs": "Double Jump Delay (ms)",
-  "text.autoconfig.enhancedmovement.option.movement.doubleJump.delayBeforeDoubleJumpMs.@Tooltip[0]": "Time to wait after initial jump before allowing double jump",
-  "text.autoconfig.enhancedmovement.option.movement.doubleJump.delayBeforeDoubleJumpMs.@Tooltip[1]": "250ms = responsive, 500ms = more deliberate timing",
-  
-  "text.autoconfig.enhancedmovement.option.movement.doubleJump.enableLedgeGrab": "Enable Ledge Grab",
-  "text.autoconfig.enhancedmovement.option.movement.doubleJump.enableLedgeGrab.@Tooltip[0]": "Enable ledge grab assist when holding jump near edges",
-  "text.autoconfig.enhancedmovement.option.movement.doubleJump.enableLedgeGrab.@Tooltip[1]": "Helps 'stick the landing' when you almost reach a ledge. Uses 50% boost strength.",
-  
-  "text.autoconfig.enhancedmovement.option.movement.dash": "Dash Movement",
-  "text.autoconfig.enhancedmovement.option.movement.dash.enabled": "Enable Dash",
-  "text.autoconfig.enhancedmovement.option.movement.dash.enabled.@Tooltip": "Enable or disable the dash functionality entirely",
-  
-  "text.autoconfig.enhancedmovement.option.movement.dash.cooldownMs": "Dash Cooldown (ms)",
-  "text.autoconfig.enhancedmovement.option.movement.dash.cooldownMs.@Tooltip[0]": "Time between dashes in milliseconds",
-  "text.autoconfig.enhancedmovement.option.movement.dash.cooldownMs.@Tooltip[1]": "100 = chained dashes, 1000 = 1s default, 5000 = 5s max",
-  
-  "text.autoconfig.enhancedmovement.option.movement.dash.useKeybinds": "Use Single Keybind",
-  "text.autoconfig.enhancedmovement.option.movement.dash.useKeybinds.@Tooltip[0]": "Choose activation: false = double-tap movement keys, true = single keybind while moving",
-  "text.autoconfig.enhancedmovement.option.movement.dash.useKeybinds.@Tooltip[1]": "Keybind mode: hold W+click dash key = dash forward. Perfect for mouse side buttons!",
-  
-  "text.autoconfig.enhancedmovement.option.movement.dash.enableAirDash": "Allow Air Dash",
-  "text.autoconfig.enhancedmovement.option.movement.dash.enableAirDash.@Tooltip": "Enable dashing while in the air (not just on ground)",
+  "enhancedmovement.config.title": "Enhanced Movement Config",
 
-  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage": "Afterimage Effects",
-  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.enabled": "Enable Afterimages",
-  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.enabled.@Tooltip[0]": "Show Sandevistan-style afterimages when dashing",
-  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.enabled.@Tooltip[1]": "Visible to all nearby players for enhanced multiplayer experience",
+  "enhancedmovement.config.section.doubleJump": "Double Jump",
+  "enhancedmovement.config.doubleJump.enabled": "Enable Double Jump",
+  "enhancedmovement.config.doubleJump.enabled.tooltip": "Enable or disable the double jump entirely.",
+  "enhancedmovement.config.doubleJump.jumpBoostPercent": "Jump Power (%)",
+  "enhancedmovement.config.doubleJump.jumpBoostPercent.tooltip": "Strength of the double-jump boost. 40% is about a 4-block boost; higher values jump higher.",
+  "enhancedmovement.config.doubleJump.delay": "Double Jump Delay (ms)",
+  "enhancedmovement.config.doubleJump.delay.tooltip": "Wait after the initial jump before a double jump is allowed. 250ms is responsive, 500ms more deliberate.",
+  "enhancedmovement.config.doubleJump.ledgeGrab": "Enable Ledge Grab",
+  "enhancedmovement.config.doubleJump.ledgeGrab.tooltip": "Ledge-grab assist when holding jump near an edge, helping you stick the landing (uses 50% boost strength).",
 
-  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.imageCount": "Afterimage Count",
-  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.imageCount.@Tooltip[0]": "Number of afterimages to create along the dash path",
-  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.imageCount.@Tooltip[1]": "20 = default trail, 30 = ultra-dense, 6 = minimal performance impact",
+  "enhancedmovement.config.section.dash": "Dash",
+  "enhancedmovement.config.dash.enabled": "Enable Dash",
+  "enhancedmovement.config.dash.enabled.tooltip": "Enable or disable the dash entirely.",
+  "enhancedmovement.config.dash.cooldown": "Dash Cooldown (ms)",
+  "enhancedmovement.config.dash.cooldown.tooltip": "Time between dashes. 100ms chains dashes, 1000ms is the default, 5000ms is the max.",
+  "enhancedmovement.config.dash.useKeybinds": "Use Single Keybind",
+  "enhancedmovement.config.dash.useKeybinds.tooltip": "Off = double-tap movement keys; On = hold a direction and press the Dash keybind (great for mouse side buttons).",
+  "enhancedmovement.config.dash.airDash": "Allow Air Dash",
+  "enhancedmovement.config.dash.airDash.tooltip": "Allow dashing while airborne, not just on the ground.",
 
-  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.baseLifetimeMs": "Fade Duration (tens of ms)",
-  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.baseLifetimeMs.@Tooltip[0]": "Base fade time for afterimages (in tens of milliseconds)",
-  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.baseLifetimeMs.@Tooltip[1]": "120 = 1.2s default lifetime, 200 = 2.0s for longer cinematic trails",
+  "enhancedmovement.config.section.afterimage": "Afterimage",
+  "enhancedmovement.config.afterimage.enabled": "Enable Afterimages",
+  "enhancedmovement.config.afterimage.enabled.tooltip": "Show Sandevistan-style afterimages when dashing (visible to nearby players).",
+  "enhancedmovement.config.afterimage.imageCount": "Afterimage Count",
+  "enhancedmovement.config.afterimage.imageCount.tooltip": "Number of afterimages along the dash path. 20 is the default, 30 ultra-dense, 6 minimal.",
+  "enhancedmovement.config.afterimage.lifetime": "Fade Duration (tens of ms)",
+  "enhancedmovement.config.afterimage.lifetime.tooltip": "Base fade time in tens of milliseconds. 120 = 1.2s default, 200 = 2.0s for longer cinematic trails.",
+  "enhancedmovement.config.afterimage.prismMode": "Prism Mode",
+  "enhancedmovement.config.afterimage.prismMode.tooltip": "Cycle afterimages through rainbow spectrum colors instead of cyan.",
 
-  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.prismMode": "Prism Mode",
-  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.prismMode.@Tooltip[0]": "Enable rainbow spectrum colors for afterimages",
-  "text.autoconfig.enhancedmovement.option.movement.dash.afterimage.prismMode.@Tooltip[1]": "Cycles through red, orange, yellow, green, blue, indigo, violet instead of cyan",
-  
-  "text.autoconfig.enhancedmovement.option.movement.general": "General Settings",
-  "text.autoconfig.enhancedmovement.option.movement.general.sneakDisablesFeatures": "Disable While Sneaking",
-  "text.autoconfig.enhancedmovement.option.movement.general.sneakDisablesFeatures.@Tooltip[0]": "Disable all enhanced movement features while sneaking",
-  "text.autoconfig.enhancedmovement.option.movement.general.sneakDisablesFeatures.@Tooltip[1]": "Uses same hunger requirement as sprinting (6+ hunger)",
-  
+  "enhancedmovement.config.section.general": "General",
+  "enhancedmovement.config.general.sneakDisables": "Disable While Sneaking",
+  "enhancedmovement.config.general.sneakDisables.tooltip": "Disable all enhanced-movement features while sneaking (same hunger requirement as sprinting).",
+
   "_comment_keybinds": "Keybind translations for Enhanced Movement",
-
   "key.category.enhancedmovement.main": "Enhanced Movement",
   "key.enhancedmovement.dash": "Dash"
 }

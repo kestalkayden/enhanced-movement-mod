@@ -12,7 +12,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.DirectionalPayloadHandler;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -61,10 +60,8 @@ public class NetworkHandler {
         registrar.playBidirectional(
             AfterimagePayload.TYPE,
             AfterimagePayload.STREAM_CODEC,
-            new DirectionalPayloadHandler<>(
-                NetworkHandler::handleAfterimagePayloadClient,
-                NetworkHandler::handleAfterimagePayloadServer
-            )
+            NetworkHandler::handleAfterimagePayloadServer,
+            NetworkHandler::handleAfterimagePayloadClient
         );
     }
 
