@@ -26,7 +26,7 @@ public class EnhancedMovement {
 
         modBus.addListener(NetworkHandler::onRegisterPayloadHandlers);
 
-        if (FMLEnvironment.getDist() == Dist.CLIENT) {
+        if (FMLEnvironment.dist == Dist.CLIENT) {
             // All client wiring (keybinds, renderers, config screen) lives in
             // EnhancedMovementClient. Reaching it only via this guarded invokestatic keeps the
             // dedicated server from loading or verifying any client class — see that class's note.

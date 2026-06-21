@@ -3,7 +3,7 @@ package com.enhancedmovement.kestalkayden;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -12,6 +12,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.handling.DirectionalPayloadHandler;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -23,10 +24,10 @@ import java.util.function.Consumer;
 @EventBusSubscriber(modid = EnhancedMovement.MOD_ID)
 public class NetworkHandler {
 
-    public static final Identifier DOUBLE_JUMP_PACKET_ID =
-        Identifier.fromNamespaceAndPath("enhancedmovement", "double_jump");
-    public static final Identifier AFTERIMAGE_PACKET_ID =
-        Identifier.fromNamespaceAndPath("enhancedmovement", "afterimage");
+    public static final ResourceLocation DOUBLE_JUMP_PACKET_ID =
+        ResourceLocation.fromNamespaceAndPath("enhancedmovement", "double_jump");
+    public static final ResourceLocation AFTERIMAGE_PACKET_ID =
+        ResourceLocation.fromNamespaceAndPath("enhancedmovement", "afterimage");
 
     private static final Map<UUID, DoubleJumpData> playerJumpData = new HashMap<>();
     private static int tickCounter = 0;
@@ -60,8 +61,10 @@ public class NetworkHandler {
         registrar.playBidirectional(
             AfterimagePayload.TYPE,
             AfterimagePayload.STREAM_CODEC,
-            NetworkHandler::handleAfterimagePayloadServer,
-            NetworkHandler::handleAfterimagePayloadClient
+            new DirectionalPayloadHandler<>(
+                NetworkHandler::handleAfterimagePayloadClient,
+                NetworkHandler::handleAfterimagePayloadServer
+            )
         );
     }
 
@@ -116,9 +119,9 @@ public class NetworkHandler {
             double smartFallDistance = Math.max(0, referenceHeight - currentY);
 
             if (smartFallDistance <= 3.5) {
-                player.fallDistance = 0.0;
+                player.fallDistance = 0.0f;
             } else {
-                player.fallDistance = Math.max(2.0, smartFallDistance * 0.7);
+                player.fallDistance = (float) Math.max(2.0, smartFallDistance * 0.7);
             }
         }
 

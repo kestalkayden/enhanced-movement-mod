@@ -6,10 +6,9 @@ import com.enhancedmovement.kestalkayden.config.EnhancedMovementConfig;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import me.shedaniel.autoconfig.AutoConfigClient;
+import me.shedaniel.autoconfig.AutoConfig;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -30,14 +29,10 @@ public class EnhancedMovementClient {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("enhancedmovement-client");
 
-    private static final KeyMapping.Category EM_CATEGORY = KeyMapping.Category.register(
-        Identifier.fromNamespaceAndPath("enhancedmovement", "main")
-    );
-
     public static final KeyMapping DASH_KEY = new KeyMapping(
         "key.enhancedmovement.dash",
         GLFW.GLFW_KEY_UNKNOWN,
-        EM_CATEGORY
+        "key.category.enhancedmovement.main"
     );
 
     private static final EnhancedMovementClient INSTANCE = new EnhancedMovementClient();
@@ -97,7 +92,7 @@ public class EnhancedMovementClient {
         // force-load vanilla client classes the server strips. This class is only reached via a
         // guarded invokestatic, so the server never loads it.
         container.registerExtensionPoint(IConfigScreenFactory.class,
-            (mod, parent) -> AutoConfigClient.getConfigScreen(EnhancedMovementConfig.class, parent).get());
+            (mod, parent) -> AutoConfig.getConfigScreen(EnhancedMovementConfig.class, parent).get());
 
         NetworkHandler.clientAfterimageReceiver = payload -> {
             EnhancedMovementConfig config = EnhancedMovement.CONFIG;
@@ -147,7 +142,9 @@ public class EnhancedMovementClient {
     }
 
     @SubscribeEvent
-    public static void onRenderLevelStage(RenderLevelStageEvent.AfterTranslucentFeatures event) {
+    public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+
         EnhancedMovementConfig config = EnhancedMovement.CONFIG;
         if (!config.movement.dash.afterimage.enabled) return;
 
@@ -158,7 +155,7 @@ public class EnhancedMovementClient {
 
         for (AfterimageManager.AfterimageData afterimage : AfterimageManager.getActiveAfterimages()) {
             if (afterimage.getOpacity() > 0.0f) {
-                Vec3 cameraPos = c.gameRenderer.getMainCamera().position();
+                Vec3 cameraPos = c.gameRenderer.getMainCamera().getPosition();
                 double distanceToCamera = afterimage.position.distanceTo(cameraPos);
                 boolean isFirstPerson = c.options.getCameraType().isFirstPerson();
                 if (!isFirstPerson || distanceToCamera > 1.5) {
@@ -268,7 +265,7 @@ public class EnhancedMovementClient {
         }
 
         if (isInAir && jumpKeyReleased && midAirJumpPerformed) {
-            c.player.fallDistance = 0.0;
+            c.player.fallDistance = 0.0f;
         }
 
         if (onGround) {
@@ -380,7 +377,7 @@ public class EnhancedMovementClient {
         // reference heights gives the player a ~3.5-block "free fall" budget below
         // their dash position, with scaled damage beyond that.
         ClientNetworkHandler.sendDoubleJumpData(startPos.y, startPos.y);
-        p.fallDistance = 0.0;
+        p.fallDistance = 0.0f;
 
         p.causeFoodExhaustion(0.1f);
     }
@@ -394,7 +391,7 @@ public class EnhancedMovementClient {
         double newVerticalVelocity = currentVerticalVelocity + fixedJumpBoost;
 
         player.setDeltaMovement(player.getDeltaMovement().add(0, newVerticalVelocity, 0));
-        player.fallDistance = 0.0;
+        player.fallDistance = 0.0f;
     }
 
     private void resetJumpState() {

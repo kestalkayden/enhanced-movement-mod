@@ -4,10 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
@@ -22,8 +21,8 @@ public class AfterimageRenderer {
      *  so under shaders the trail draws silently fail. entity_translucent_emissive
      *  uses the entity rendering pipeline which every shader pack handles. Blend, depth,
      *  and cull semantics happen to match exactly what debug_quads provided. */
-    private static final Identifier WHITE_TEXTURE =
-        Identifier.fromNamespaceAndPath("enhancedmovement", "textures/effect/white.png");
+    private static final ResourceLocation WHITE_TEXTURE =
+        ResourceLocation.fromNamespaceAndPath("enhancedmovement", "textures/effect/white.png");
 
     public static void renderAfterimage(
         PoseStack matrices,
@@ -33,7 +32,7 @@ public class AfterimageRenderer {
     ) {
         matrices.pushPose();
 
-        Vec3 cameraPos = client.gameRenderer.getMainCamera().position();
+        Vec3 cameraPos = client.gameRenderer.getMainCamera().getPosition();
         Vec3 offsetPos = afterimage.position;
 
         Vec3 cameraToAfterimage = offsetPos.subtract(cameraPos);
@@ -56,7 +55,7 @@ public class AfterimageRenderer {
 
     private static void renderPlayerSilhouette(PoseStack matrices, MultiBufferSource vertexConsumers, float opacity, int light, AfterimageManager.AfterimageData afterimage) {
         Matrix4f matrix = matrices.last().pose();
-        RenderType renderType = RenderTypes.entityTranslucentEmissive(WHITE_TEXTURE);
+        RenderType renderType = RenderType.entityTranslucentEmissive(WHITE_TEXTURE);
         VertexConsumer vertexConsumer = vertexConsumers.getBuffer(renderType);
 
         float red, green, blue;

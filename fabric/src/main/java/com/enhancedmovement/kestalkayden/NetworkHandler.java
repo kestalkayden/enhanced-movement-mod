@@ -6,7 +6,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -17,10 +17,10 @@ import java.util.UUID;
 
 public class NetworkHandler {
 
-    public static final Identifier DOUBLE_JUMP_PACKET_ID =
-        Identifier.fromNamespaceAndPath("enhancedmovement", "double_jump");
-    public static final Identifier AFTERIMAGE_PACKET_ID =
-        Identifier.fromNamespaceAndPath("enhancedmovement", "afterimage");
+    public static final ResourceLocation DOUBLE_JUMP_PACKET_ID =
+        ResourceLocation.fromNamespaceAndPath("enhancedmovement", "double_jump");
+    public static final ResourceLocation AFTERIMAGE_PACKET_ID =
+        ResourceLocation.fromNamespaceAndPath("enhancedmovement", "afterimage");
 
     private static final Map<UUID, DoubleJumpData> playerJumpData = new HashMap<>();
     private static int tickCounter = 0;
@@ -40,9 +40,9 @@ public class NetworkHandler {
     }
 
     public static void initialize() {
-        PayloadTypeRegistry.serverboundPlay().register(DoubleJumpPayload.TYPE, DoubleJumpPayload.STREAM_CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(AfterimagePayload.TYPE, AfterimagePayload.STREAM_CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(AfterimagePayload.TYPE, AfterimagePayload.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(DoubleJumpPayload.TYPE, DoubleJumpPayload.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(AfterimagePayload.TYPE, AfterimagePayload.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(AfterimagePayload.TYPE, AfterimagePayload.STREAM_CODEC);
 
         ServerPlayNetworking.registerGlobalReceiver(DoubleJumpPayload.TYPE, (payload, context) -> {
             ServerPlayer player = context.player();
@@ -88,9 +88,9 @@ public class NetworkHandler {
             double smartFallDistance = Math.max(0, referenceHeight - currentY);
 
             if (smartFallDistance <= 3.5) {
-                player.fallDistance = 0.0;
+                player.fallDistance = 0.0f;
             } else {
-                player.fallDistance = Math.max(2.0, smartFallDistance * 0.7);
+                player.fallDistance = (float) Math.max(2.0, smartFallDistance * 0.7);
             }
         }
 

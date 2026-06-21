@@ -5,13 +5,13 @@ import com.enhancedmovement.kestalkayden.NetworkHandler;
 import com.enhancedmovement.kestalkayden.config.EnhancedMovementConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.resources.Identifier;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
@@ -28,9 +28,6 @@ public class EnhancedMovementClient implements ClientModInitializer {
     private final Minecraft client = Minecraft.getInstance();
 
     private static KeyMapping dashKey;
-    private static final KeyMapping.Category EM_CATEGORY = KeyMapping.Category.register(
-        Identifier.fromNamespaceAndPath("enhancedmovement", "main")
-    );
 
     // Jump tracking
     private boolean jumpKeyPressed = false;
@@ -89,10 +86,10 @@ public class EnhancedMovementClient implements ClientModInitializer {
     public void onInitializeClient() {
         LOGGER.info("Enhanced Movement client initialized.");
 
-        dashKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+        dashKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
             "key.enhancedmovement.dash",
             GLFW.GLFW_KEY_UNKNOWN,
-            EM_CATEGORY
+            "key.category.enhancedmovement.main"
         ));
 
         ClientPlayNetworking.registerGlobalReceiver(NetworkHandler.AfterimagePayload.TYPE, (payload, context) -> {
@@ -112,24 +109,28 @@ public class EnhancedMovementClient implements ClientModInitializer {
             });
         });
 
-        LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register((context) -> {
+        WorldRenderEvents.AFTER_TRANSLUCENT.register((context) -> {
             EnhancedMovementConfig config = EnhancedMovement.CONFIG;
             if (!config.movement.dash.afterimage.enabled) return;
 
-            var matrices = context.poseStack();
-            var vertexConsumers = context.bufferSource();
+            var matrices = context.matrixStack();
+            if (matrices == null) return;
+            MultiBufferSource.BufferSource vertexConsumers = client.renderBuffers().bufferSource();
             int light = 15728880;
 
+            boolean rendered = false;
             for (AfterimageManager.AfterimageData afterimage : AfterimageManager.getActiveAfterimages()) {
                 if (afterimage.getOpacity() > 0.0f) {
-                    Vec3 cameraPos = client.gameRenderer.getMainCamera().position();
+                    Vec3 cameraPos = client.gameRenderer.getMainCamera().getPosition();
                     double distanceToCamera = afterimage.position.distanceTo(cameraPos);
                     boolean isFirstPerson = client.options.getCameraType().isFirstPerson();
                     if (!isFirstPerson || distanceToCamera > 1.5) {
                         AfterimageRenderer.renderAfterimage(matrices, vertexConsumers, afterimage, light);
+                        rendered = true;
                     }
                 }
             }
+            if (rendered) vertexConsumers.endBatch();
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(c -> {
@@ -260,7 +261,7 @@ public class EnhancedMovementClient implements ClientModInitializer {
         }
 
         if (isInAir && jumpKeyReleased && midAirJumpPerformed) {
-            client.player.fallDistance = 0.0;
+            client.player.fallDistance = 0.0f;
         }
 
         if (onGround) {
@@ -372,7 +373,7 @@ public class EnhancedMovementClient implements ClientModInitializer {
         // reference heights gives the player a ~3.5-block "free fall" budget below
         // their dash position, with scaled damage beyond that.
         ClientNetworkHandler.sendDoubleJumpData(startPos.y, startPos.y);
-        p.fallDistance = 0.0;
+        p.fallDistance = 0.0f;
 
         p.causeFoodExhaustion(0.1f);
     }
@@ -386,7 +387,7 @@ public class EnhancedMovementClient implements ClientModInitializer {
         double newVerticalVelocity = currentVerticalVelocity + fixedJumpBoost;
 
         player.setDeltaMovement(player.getDeltaMovement().add(0, newVerticalVelocity, 0));
-        player.fallDistance = 0.0;
+        player.fallDistance = 0.0f;
     }
 
     private void resetJumpState() {
