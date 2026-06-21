@@ -1,7 +1,7 @@
 // Loom 1.7.x is applied via the legacy buildscript classpath, not the `plugins {}` DSL.
 // Reason: the Fabric maven only publishes plugin *markers* for loom 1.14.0+, and loom 1.14+
-// added a `notObfuscated()` guard that wrongly trips on obfuscated 1.21.1 (those builds target
-// the 26.x non-obfuscated game). Loom 1.7.4 has no such guard and builds obfuscated 1.21.1,
+// added a `notObfuscated()` guard that wrongly trips on obfuscated 1.21.4 (those builds target
+// the 26.x non-obfuscated game). Loom 1.7.4 has no such guard and builds obfuscated 1.21.4,
 // but has no plugin marker — so we pull its main artifact directly here.
 buildscript {
     repositories {

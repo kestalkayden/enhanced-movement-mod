@@ -4,7 +4,7 @@
   "version": "${version}",
 
   "name": "Enhanced Movement",
-  "description": "Double jump, dash in any direction, ledge grab, and afterimages — built for Minecraft 1.21.1.",
+  "description": "Double jump, dash in any direction, ledge grab, and afterimages — built for Minecraft 1.21.4.",
   "authors": [
     "Kestalkayden"
   ],
@@ -30,7 +30,7 @@
   },
   "depends": {
     "fabricloader": ">=0.18.4",
-    "minecraft": ">=1.21.1 <1.21.2",
+    "minecraft": ">=1.21.4 <1.21.5",
     "java": ">=21",
     "fabric-api": "*"
   },
