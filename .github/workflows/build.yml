@@ -85,7 +85,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
         with:
-          java-version: '25'
+          java-version: '21'
           distribution: 'temurin'
       - uses: gradle/actions/wrapper-validation@v6
       - run: chmod +x ./gradlew
@@ -104,7 +104,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
         with:
-          java-version: '25'
+          java-version: '21'
           distribution: 'temurin'
       - uses: gradle/actions/wrapper-validation@v6
       - run: chmod +x ./gradlew
@@ -142,12 +142,10 @@ jobs:
           files: fabric/build/libs/!(*-@(sources|javadoc)).jar
           loaders: fabric
           game-versions: |
-            26.1
-            26.1.1
-            26.1.2
+            1.21.11
           version-type: release
           game-version-filter: none
-          java: 25
+          java: 21
       - name: patch modrinth fabric env metadata
         if: ${{ needs.plan.outputs.fabric == 'true' && steps.mr-fabric.outputs.modrinth-version != '' }}
         run: |
@@ -166,12 +164,10 @@ jobs:
           files: neoforge/build/libs/!(*-@(sources|javadoc)).jar
           loaders: neoforge
           game-versions: |
-            26.1
-            26.1.1
-            26.1.2
+            1.21.11
           version-type: release
           game-version-filter: none
-          java: 25
+          java: 21
       - name: patch modrinth neoforge env metadata
         if: ${{ needs.plan.outputs.neoforge == 'true' && steps.mr-neoforge.outputs.modrinth-version != '' }}
         run: |
@@ -206,12 +202,10 @@ jobs:
           files: fabric/build/libs/!(*-@(sources|javadoc)).jar
           loaders: fabric
           game-versions: |
-            26.1
-            26.1.1
-            26.1.2
+            1.21.11
           version-type: release
           game-version-filter: none
-          java: 25
+          java: 21
       - name: curseforge neoforge
         if: needs.plan.outputs.neoforge == 'true'
         uses: Kira-NT/mc-publish@v3.3
@@ -222,12 +216,10 @@ jobs:
           files: neoforge/build/libs/!(*-@(sources|javadoc)).jar
           loaders: neoforge
           game-versions: |
-            26.1
-            26.1.1
-            26.1.2
+            1.21.11
           version-type: release
           game-version-filter: none
-          java: 25
+          java: 21
 
   # GitHub Release is per-version (one release, both loader jars attached) — not per-loader.
   publish-github:
@@ -258,4 +250,4 @@ jobs:
             fabric/build/libs/!(*-@(sources|javadoc)).jar
             neoforge/build/libs/!(*-@(sources|javadoc)).jar
           version-type: release
-          java: 25
+          java: 21

@@ -5,9 +5,9 @@ import com.enhancedmovement.kestalkayden.NetworkHandler;
 import com.enhancedmovement.kestalkayden.config.EnhancedMovementConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -89,7 +89,7 @@ public class EnhancedMovementClient implements ClientModInitializer {
     public void onInitializeClient() {
         LOGGER.info("Enhanced Movement client initialized.");
 
-        dashKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+        dashKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
             "key.enhancedmovement.dash",
             GLFW.GLFW_KEY_UNKNOWN,
             EM_CATEGORY
@@ -112,12 +112,12 @@ public class EnhancedMovementClient implements ClientModInitializer {
             });
         });
 
-        LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register((context) -> {
+        WorldRenderEvents.END_MAIN.register((context) -> {
             EnhancedMovementConfig config = EnhancedMovement.CONFIG;
             if (!config.movement.dash.afterimage.enabled) return;
 
-            var matrices = context.poseStack();
-            var vertexConsumers = context.bufferSource();
+            var matrices = context.matrices();
+            var vertexConsumers = context.consumers();
             int light = 15728880;
 
             for (AfterimageManager.AfterimageData afterimage : AfterimageManager.getActiveAfterimages()) {

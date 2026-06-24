@@ -40,9 +40,9 @@ public class NetworkHandler {
     }
 
     public static void initialize() {
-        PayloadTypeRegistry.serverboundPlay().register(DoubleJumpPayload.TYPE, DoubleJumpPayload.STREAM_CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(AfterimagePayload.TYPE, AfterimagePayload.STREAM_CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(AfterimagePayload.TYPE, AfterimagePayload.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(DoubleJumpPayload.TYPE, DoubleJumpPayload.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(AfterimagePayload.TYPE, AfterimagePayload.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(AfterimagePayload.TYPE, AfterimagePayload.STREAM_CODEC);
 
         ServerPlayNetworking.registerGlobalReceiver(DoubleJumpPayload.TYPE, (payload, context) -> {
             ServerPlayer player = context.player();

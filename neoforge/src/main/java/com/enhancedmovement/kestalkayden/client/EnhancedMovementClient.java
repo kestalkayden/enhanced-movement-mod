@@ -147,7 +147,7 @@ public class EnhancedMovementClient {
     }
 
     @SubscribeEvent
-    public static void onRenderLevelStage(RenderLevelStageEvent.AfterTranslucentFeatures event) {
+    public static void onRenderLevelStage(RenderLevelStageEvent.AfterTranslucentBlocks event) {
         EnhancedMovementConfig config = EnhancedMovement.CONFIG;
         if (!config.movement.dash.afterimage.enabled) return;
 
